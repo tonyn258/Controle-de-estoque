@@ -1,0 +1,85 @@
+/* Custom styling for the form */
+.form-group {
+    margin-bottom: 15px;
+  }
+  
+  .form-control {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #be2222;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+  
+  .select-box {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+  
+  .btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+    color: #fff;
+  }
+  
+  .btn-primary:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+  }
+  
+  .btn-danger {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: #fff;
+  }
+  
+  .btn-danger:hover {
+    background-color: #ac1f2b;
+    border-color: #ac1f2b;
+  }
+  
+  /* Adjust layout */
+  .content-wrapper {
+    margin: 20px;
+  }
+  
+  .box {
+    border-radius: 4px;
+  }
+  
+  .box-header {
+    background-color: #f4f4f4;
+    padding: 10px;
+    border-bottom: 1px solid #ccc;
+  }
+  
+  .box-title {
+    font-size: 18px;
+  }
+  
+  .box-body {
+    padding: 20px;
+  }
+  
+  .box-footer {
+    padding: 10px;
+    text-align: right;
+  }
+  
+  /* Additional styling for specific elements */
+  .input-box {
+    margin-top: 5px;
+  }
+  
+  /* Adjust form layout for smaller screens */
+  @media (max-width: 768px) {
+    .col-sm-2,
+    .col-sm-3,
+    .col-md-9 {
+      width: 100%;
+    }
+  }
+  

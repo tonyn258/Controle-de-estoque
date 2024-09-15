@@ -1,0 +1,134 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    font-family: 'Poppins', sans-serif;
+}
+
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+}
+
+.aurora {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to bottom, #1c1c1c, #2a2a2a, #505050, #7f7f7f);
+    position: absolute;
+    animation: auroraAnimation 5s linear infinite;
+}
+
+@keyframes auroraAnimation {
+    0%, 100% {
+        background: linear-gradient(to bottom, #2e2e2e, #4b4b4b, #6e6e6e, #a5a5a5);
+    }
+    25% {
+        background: linear-gradient(to bottom, #1c1c1c, #393939, #585858, #808080);
+    }
+    50% {
+        background: linear-gradient(to bottom, #1c1c1c, #2a2a2a, #505050, #7f7f7f);
+    }
+    75% {
+        background: linear-gradient(to bottom, #1c1c1c, #2a2a2a, #505050, #7f7f7f);
+    }
+}
+
+section {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    width: 100%;
+}
+
+.form-box {
+    position: relative;
+    width: 400px;
+    height: 450px;    
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 2px double #333;
+    border-radius: 10%;
+    background: linear-gradient(to bottom,
+                    rgba(131, 131, 131, 0.3) 0%,
+                    rgba(70, 70, 70, 0.1) 15%,
+                    transparent 50%,
+                    transparent 85%,
+                    rgba(100, 100, 100, 0.3) 100%);
+}
+
+.form-box:hover{
+    box-shadow: 0 0 60px #666;
+}
+
+h2 {
+    font-size: 2em;
+    color: #f8f8f8;
+    text-align: center;
+}
+
+.input-box {
+    position: relative;
+    margin: 30px 0;
+    width: 310px;
+    border: none;
+    outline: none;
+    border: 2px solid rgba(255, 255, 255, .2);
+    border-radius: 40px;
+}
+
+.input-box label {
+    position: absolute;
+    top: 0px;
+    left: 5px;
+    transform: translateY(-50%);
+    color: #fff;
+    font-size: 1em;
+    pointer-events: none;
+    transition: top 0.3s ease, font-size 0.3s ease;
+}
+
+.input-box ion-icon {
+    position: absolute;
+    right: 8px;
+    color: #fff;
+    font-size: 1.2em;
+    top: 20px;
+}
+
+.input-box input:focus+label,
+.input-box input:valid+label{
+    top: -5px;
+    font-size: 0.8em;
+}
+
+.input-box input {
+    width: 100%;
+    height: 50px;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-size: 1em;
+    padding: 0 35px 0 5px;
+    color: #fff;
+    transition: .5s;
+}
+
+button{
+    width: 100%; 
+    height: 40px;
+    border-radius: 40px;
+    background: #ccc;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    font-size: 1em;
+}
+
+.bg-dodgerblue {
+    background-color: #808080;
+}
