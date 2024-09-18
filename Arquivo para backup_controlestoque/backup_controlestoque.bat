@@ -1,0 +1,1 @@
+C:\xampp\mysql\bin\mysqldump -u root controlestoque > C:\xampp\htdocs\www\projetos\website\DB_Backups\%date:~0,2%%date:~3,2%%date:~6,4%.sql
