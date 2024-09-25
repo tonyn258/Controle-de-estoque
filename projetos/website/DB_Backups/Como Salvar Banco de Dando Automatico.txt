@@ -1,0 +1,15 @@
+na pasta que for salvar na barra de endereço digite cmd e cole "C:\xampp\mysql\bin\mysqldump -u root controlestoque > backup_08032023.sql"
+
+
+
+https://www.youtube.com/watch?v=OiRxhpluX1c
+https://www.youtube.com/watch?v=Sae_AMrTRqc&t=827s
+
+
+%date:~0,2%%date:~3,2%%date:~6,4%.sql
+
+
+C:\xampp\mysql\bin\mysqldump -u root controlestoque > %date:~0,2%%date:~3,2%%date:~6,4%.sql
+
+
+C:\xampp\mysql\bin\mysqldump -u root controlestoque > C:\xampp\htdocs\www\projetos\website\DB.sql\%date:~0,2%%date:~3,2%%date:~6,4%.sql
