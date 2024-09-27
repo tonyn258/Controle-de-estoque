@@ -1,6 +1,6 @@
 # Sistema de Gerenciamento de Estoque - Dashboard
 
-Este sistema de gerenciamento de estoque permite controlar e monitorar as transações de compras e vendas de produtos em uma
+Este sistema de gerenciamento de estoque permite controlar e monitorar as transações de compras e vendas de produtos em uma interface gráfica interativa (dashboard). O objetivo é fornecer uma visão clara da quantidade de produtos comprados, vendidos e calcular o lucro gerado, através de gráficos dinâmicos e relatórios automáticos.
 
 ## Funcionalidades
 
