@@ -3,7 +3,7 @@
 
 <head>
   <link rel="stylesheet" href='css/login.css'><!-- importação do arquivo CSS -->
-  <script src="script/login.js"></script> <!-- importação do arquivo JavaScript -->
+  <!--<script src="script/login.js"></script>  importação do arquivo JavaScript -->
 
 
   <meta charset="UTF-8">
