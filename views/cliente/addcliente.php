@@ -117,6 +117,7 @@ echo $javascript;
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <script>
+  //teste
   $(document).ready(function() {
     // Formatação para a primeira letra maiúscula em cada palavra do campo "Nome Cliente"
     $('input[name="NomeCliente"]').on('blur', function() {
