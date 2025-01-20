@@ -635,10 +635,10 @@ $aside = '<!-- Left side column. contains the logo and sidebar -->
     <ul class="treeview-menu">
                  
       
-      <li><a href="' . $url . 'vendasView/indexView1.php"><i class="fa ion-bag"></i>View Vendas 1</a></li>
-      <li><a href="' . $url . 'vendasView/indexView2.php"><i class="fa ion-bag"></i>View Vendas 2</a></li>
-      <li><a href="' . $url . 'vendasView/indexView3.php"><i class="fa ion-bag"></i>View Vendas 3</a></li>
-      <li><a href="' . $url . 'vendasView/indexView4.php"><i class="fa ion-bag"></i>View Vendas 4</a></li>
+      <!--<li><a href="' . $url . 'vendasView/indexView1.php"><i class="fa ion-bag"></i>View Vendas 1</a></li>-->
+      <!--<li><a href="' . $url . 'vendasView/indexView2.php"><i class="fa ion-bag"></i>View Vendas 2</a></li>-->
+      <!--<li><a href="' . $url . 'vendasView/indexView3.php"><i class="fa ion-bag"></i>View Vendas 3</a></li>-->
+      <li><a href="' . $url . 'vendasView/indexView4.php"><i class="fa ion-bag"></i>View Vendas</a></li>
     </ul>
   </li>
 

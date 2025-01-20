@@ -5,53 +5,55 @@ class Vendas extends Connect
 
     function index($value)
     {
-      // Verifica se a conexão com o banco de dados está funcionando
-      if (!$this->SQL) {
-        die("Conexão com o banco de dados falhou: " . mysqli_connect_error());
-      }
-      $this->query = "SELECT * FROM `vendas`";  
-      $this->result = mysqli_query($this->SQL, $this->query) or die(mysqli_error($this->SQL));
-      $row = array();
-      while ($r = mysqli_fetch_assoc($this->result)) {
-        $row[] = $r;
-      } 
-      // Verifica se houve algum resultado
-      if (count($row) > 0) {
-        return json_encode($row);
-      } else {
-        return json_encode(array("message" => "Nenhum resultado encontrado."));
-      }
+        // Verifica se a conexão com o banco de dados está funcionando
+        if (!$this->SQL) {
+            die("Conexão com o banco de dados falhou: " . mysqli_connect_error());
+        }
+        $this->query = "SELECT * FROM `vendas`";
+        $this->result = mysqli_query($this->SQL, $this->query) or die(mysqli_error($this->SQL));
+        $row = array();
+        while ($r = mysqli_fetch_assoc($this->result)) {
+            $row[] = $r;
+        }
+        // Verifica se houve algum resultado
+        if (count($row) > 0) {
+            return json_encode($row);
+        } else {
+            return json_encode(array("message" => "Nenhum resultado encontrado."));
+        }
     } //fim -- index
 
-    public function itensVerify($Id_Compra, $quant){     
+    public function itensVerify($Id_Compra, $quant)
+    {
         $this->query = "SELECT * FROM `compras` WHERE `IdCompra` = '$Id_Compra'";
         $this->result = mysqli_query($this->SQL, $this->query) or die(mysqli_error($this->SQL));
         $total = mysqli_num_rows($this->result);
-      
+
         if ($total > 0) {
-          if ($row = mysqli_fetch_array($this->result)) {
-            $q = $row['QuantItens'];
-            $v = $row['QuantItensVend'];
-            $quantotal = $v + $quant;
-      
-            if ($q >= $quantotal) {
-              return array('status' => '1', 'NomeProduto' => $row['NomeProduto']);
-            } else {
-              $estoque = $q - $v;
-              return array('status' => '0', 'NomeProduto' => $row['NomeProduto'], 'estoque' => $estoque);
+            if ($row = mysqli_fetch_array($this->result)) {
+                $q = $row['QuantItens'];
+                $v = $row['QuantItensVend'];
+                $quantotal = $v + $quant;
+
+                if ($q >= $quantotal) {
+                    return array('status' => '1', 'NomeProduto' => $row['NomeProduto']);
+                } else {
+                    $estoque = $q - $v;
+                    return array('status' => '0', 'NomeProduto' => $row['NomeProduto'], 'estoque' => $estoque);
+                }
             }
-          }
         } else {
-          $_SESSION['msg'] = '<div class="alert alert-warning"><strong>Ops!</strong> Compra ('.$Id_Compra.') não encontrada!</div>';
-          header('Location: ../../views/vendas/index.php');
-          exit();
+            $_SESSION['msg'] = '<div class="alert alert-warning"><strong>Ops!</strong> Compra (' . $Id_Compra . ') não encontrada!</div>';
+            header('Location: ../../views/vendas/index.php');
+            exit();
         }
-    } 
+    }
 
-    
 
-        
-    public function itensVendido($Id_Compra, $quant,$NomeCliente,$cpfCliente,$FoneCliente,$Cidade,$UF,$idUsuario,$DataVenda, $CodRastreioV,$TxMl,$TxFret,$Vd_Tax){
+
+
+    public function itensVendido($Id_Compra, $quant, $NomeCliente, $cpfCliente, $FoneCliente, $Cidade, $UF, $idUsuario, $DataVenda, $CodRastreioV, $TxMl, $TxFret, $Vd_Tax)
+    {
         // Verificar se o item de compra existe
         $this->query = "SELECT * FROM `compras` WHERE `IdCompra` = '$Id_Compra'";
         $this->result = mysqli_query($this->SQL, $this->query) or die(mysqli_error($this->SQL));

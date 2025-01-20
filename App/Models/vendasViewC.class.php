@@ -17,7 +17,8 @@ class Vendas extends Connect
                      c.UF, 
                      cp.NomeProduto,
                      v.Itensquant,
-                     v.Vd_Tax
+                     v.Vd_Tax,
+                     v.Venda_Total
               FROM vendas v
               JOIN cliente c ON v.cliente_idCliente = c.idCliente
               JOIN compras cp ON v.Id_Compra = cp.IdCompra
@@ -37,7 +38,7 @@ class Vendas extends Connect
   }
 
   // Função para inserir uma nova venda no banco de dados
-  function insertVenda($Itensquant, $valor, $Id_Compra, $cliente_idCliente, $DataVenda, $CodRastreioV, $Vd_Tax)
+  function insertVenda($Itensquant, $valor, $Id_Compra, $cliente_idCliente, $DataVenda, $CodRastreioV, $Vd_Tax, $Venda_Total)
   {
     // Escapa caracteres especiais para evitar SQL injection
     $Itensquant        = mysqli_real_escape_string($this->SQL, $Itensquant);
@@ -47,13 +48,14 @@ class Vendas extends Connect
     $DataVenda         = mysqli_real_escape_string($this->SQL, $DataVenda);
     $CodRastreioV      = mysqli_real_escape_string($this->SQL, $CodRastreioV);
     $Vd_Tax            = mysqli_real_escape_string($this->SQL, $Vd_Tax);
+    $Venda_Total       = mysqli_real_escape_string($this->SQL, $Venda_Total);
 
     // Query de inserção
-    $query = "INSERT INTO `vendas`(`Itensquant`, `valor`, `Id_Compra`, `cliente_idCliente`, `DataVenda`, `CodRastreioV`, `Vd_Tax`) 
-              VALUES ('$Itensquant', '$valor', '$Id_Compra', '$cliente_idCliente', '$DataVenda', '$CodRastreioV', '$Vd_Tax')";
-    
+    $query = "INSERT INTO `vendas`(`Itensquant`, `valor`, `Id_Compra`, `cliente_idCliente`, `DataVenda`, `CodRastreioV`, `Vd_Tax` , `Venda_Total`) 
+              VALUES ('$Itensquant', '$valor', '$Id_Compra', '$cliente_idCliente', '$DataVenda', '$CodRastreioV', '$Vd_Tax' , '$Venda_Total')";
+
     $result = mysqli_query($this->SQL, $query) or die(mysqli_error($this->SQL));
-    
+
     if ($result) {
       return 1;
     } else {
@@ -62,4 +64,3 @@ class Vendas extends Connect
     mysqli_close($this->SQL);
   }
 }
-?>

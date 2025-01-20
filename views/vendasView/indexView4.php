@@ -22,7 +22,7 @@ require '../../layout/alert.php'; // Inclui alertas para mensagens ao usuário
 echo '
   <div class="row">  
    <div class="box box-primary">
-    <div class="box-body">' ;
+    <div class="box-body">';
 
 // Campo de busca (pesquisa por nome ou CPF)
 echo '
@@ -33,7 +33,7 @@ echo '
 ';
 
 // Instancia um novo objeto da classe Vendas
-$vendas = new Vendas; 
+$vendas = new Vendas;
 $resp = $vendas->indexView("ORDER BY v.idVendas DESC"); // Ordena pelo idVendas de forma decrescente
 $resps = json_decode($resp, true);
 
@@ -41,10 +41,11 @@ $resps = json_decode($resp, true);
 $vendasAgrupadas = [];
 foreach ($resps as $row) {
     $CodRastreioV = $row['CodRastreioV'];
-    
+
     // Se já existir um registro com o mesmo código de rastreio, acumule a taxa e os produtos
     if (isset($vendasAgrupadas[$CodRastreioV])) {
         $vendasAgrupadas[$CodRastreioV]['Vd_Tax'] += $row['Vd_Tax'];
+        $vendasAgrupadas[$CodRastreioV]['Venda_Total'] += $row['Venda_Total']; // Acumula o valor de Venda_Total
         $vendasAgrupadas[$CodRastreioV]['Produtos'][] = [
             'NomeProduto' => $row['NomeProduto'],
             'Itensquant' => $row['Itensquant'],
@@ -57,6 +58,7 @@ foreach ($resps as $row) {
             'Cidade' => $row['Cidade'],
             'UF' => $row['UF'],
             'Vd_Tax' => $row['Vd_Tax'],  // Adiciona Vd_Tax
+            'Venda_Total' => $row['Venda_Total'], // Adiciona Venda_Total
             'Produtos' => [[
                 'NomeProduto' => $row['NomeProduto'],
                 'Itensquant' => $row['Itensquant'],
@@ -71,8 +73,8 @@ echo '<ul class="list-group" id="clientesList">'; // Adiciona o ID da lista para
 
 // Exibe os resultados agrupados
 foreach ($vendasAgrupadas as $CodRastreioV => $venda) {
-    // Formatação da taxa como moeda brasileira
-    $Vd_Tax = 'R$' . number_format($venda['Vd_Tax'], 2, ',', '.');
+    // Formatação da Venda_Total como moeda brasileira
+    $Venda_Total = 'R$' . number_format($venda['Venda_Total'], 2, ',', '.');
     $nomeCliente = $venda['NomeCliente'];
     $Cidade = $venda['Cidade'];
     $UF = $venda['UF'];
@@ -80,14 +82,14 @@ foreach ($vendasAgrupadas as $CodRastreioV => $venda) {
     // Exibição no formato solicitado
     echo '<li class="list-group-item">
             <div style="cursor:pointer;" onclick="toggleDetails(this)">
-                ' . $CodRastreioV . ' - ' . $nomeCliente . ' - ' . $Cidade . ' - ' . $UF . ' - ' . $Vd_Tax . '
+                ' . $CodRastreioV . ' - ' . $nomeCliente . ' - ' . $Cidade . ' - ' . $UF . ' - ' . $Venda_Total . '
             </div>
             <div class="product-details" style="display:none; margin-top: 10px;">';
 
     // Exibe todos os produtos relacionados ao código de rastreio
     foreach ($venda['Produtos'] as $produto) {
         $produtoTax = 'R$' . number_format($produto['Vd_Tax'], 2, ',', '.');
-        
+
         // Exibe o NomeProduto de acordo com o valor de Itensquant
         for ($i = 0; $i < $produto['Itensquant']; $i++) {
             echo '<div>
@@ -139,4 +141,3 @@ echo '
     }
 </script>
 ';
-?>

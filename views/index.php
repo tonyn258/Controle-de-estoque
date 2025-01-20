@@ -5,137 +5,123 @@ require_once '../views/index.php';
 require_once '../App/Models/vendas.class.php';
 require_once '../App/Models/compras.class.php';
 
-// Imprime o cabeçalho HTML, o cabeçalho da página, a barra lateral e abre a seção do conteúdo
 echo $head;
 echo $header;
 echo $aside;
-echo '<div class="content-wrapper"> 
-      <section class="content">';
+echo '<div class="content-wrapper"><section class="content">';
 
-// informações de conexão com o BANCO DE DADOS
+// Conexão com o banco de dados
 $conexao = new connect();
 $vendas = new Vendas($conexao);
 $compras = new Compras($conexao);
 
 // Obtém o ano atual
 $currentYear = date('Y');
-$currentMonth = date('n');
 
-// Verifica se o usuário selecionou um ano no formulário, caso contrário, usa o ano atual ou a opção "Todos"
+// Verifica se o usuário selecionou um ano no formulário
 $selectedYear = isset($_POST['year']) ? $_POST['year'] : $currentYear;
 
+// Formulário de seleção de ano
 ?>
-
-<!-- Formulário para seleção do ano -->
 <form method="post" action="">
   <label for="year">Selecione o ano:</label>
   <select name="year" id="year">
     <option value="all" <?php if ($selectedYear === 'all') echo 'selected'; ?>>Todos os anos</option>
     <?php for ($i = $currentYear; $i >= 2021; $i--) { ?>
-      <option value="<?php echo $i; ?>" <?php if ($i === $selectedYear) echo 'selected'; ?>><?php echo $i; ?></option>
+      <option value="<?php echo $i; ?>" <?php if ($i == $selectedYear) echo 'selected'; ?>><?php echo $i; ?></option>
     <?php } ?>
   </select>
-  <button type="submit">Gerar Gráfico</button>
+  <button type="submit">Filtrar</button>
 </form>
 
 <?php
+// Consultas para compras e vendas
+$sql_compras = ($selectedYear === 'all') ?
+  "SELECT DataCompra, ValorCompra, QuantItens FROM compras" :
+  "SELECT DataCompra, ValorCompra, QuantItens FROM compras WHERE YEAR(DataCompra) = $selectedYear";
 
-// Query para buscar as informações de vendas do banco de dados para o ano selecionado ou todos os anos
-if ($selectedYear === 'all') {
-  $sql_vendas = "SELECT Compra_id, Vd_Tax, DataVenda, Itensquant FROM vendas";
-  $sql_compras = "SELECT NULL AS Vd_Tax, NULL AS DataVenda, DataCompra, ValorCompra FROM compras";
-} else {
-  $sql_vendas = "SELECT Compra_id, Vd_Tax, DataVenda, Itensquant FROM vendas WHERE YEAR(DataVenda) = $selectedYear";
-  $sql_compras = "SELECT NULL AS Vd_Tax, NULL AS DataVenda, DataCompra, ValorCompra, QuantItens FROM compras WHERE YEAR(DataCompra) = $selectedYear";
-}
+$sql_vendas = ($selectedYear === 'all') ?
+  "SELECT DataVenda, Venda_Total, Diferenca_Quantidade FROM vendas" :
+  "SELECT DataVenda, Venda_Total, Diferenca_Quantidade FROM vendas WHERE YEAR(DataVenda) = $selectedYear";
 
-
-
-$result_vendas = mysqli_query($conexao->SQL, $sql_vendas);
 $result_compras = mysqli_query($conexao->SQL, $sql_compras);
+$result_vendas = mysqli_query($conexao->SQL, $sql_vendas);
 
-// Obtém o valor total das compras
-$result = mysqli_query($conexao->SQL, $sql_compras);
-$totalCompras = 0;
-while ($row = mysqli_fetch_assoc($result)) {
-  $valorCompra = (float)$row["ValorCompra"] * (int)$row["QuantItens"];
-  $totalCompras += $valorCompra;
+// Inicializa o array $dataArray com os meses do ano e valores padrão
+$meses = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+$dataArray = array_fill(1, 12, ['compra' => 0, 'venda' => 0, 'lucro' => 0]);
+
+// Preenche os dados de compras
+while ($row = mysqli_fetch_assoc($result_compras)) {
+  $mes = (int)date("n", strtotime($row['DataCompra']));
+  $dataArray[$mes]['compra'] += $row['ValorCompra'] * $row['QuantItens'];
 }
 
-// Obtém o valor total das vendas
-$result = mysqli_query($conexao->SQL, $sql_vendas);
-$totalVendas = 0;
-while ($row = mysqli_fetch_assoc($result)) {
-  $totalVendas += (float)$row['Vd_Tax'] * (int)$row['Itensquant'];
+// Preenche os dados de vendas e lucro
+while ($row = mysqli_fetch_assoc($result_vendas)) {
+  $mes = (int)date("n", strtotime($row['DataVenda']));
+  $dataArray[$mes]['venda'] += $row['Venda_Total'];
+  $dataArray[$mes]['lucro'] += $row['Diferenca_Quantidade'];
 }
 
-// Obtém o valor total dos lucros
-$result = mysqli_query($conexao->SQL, $sql_vendas);
-$totalLucros = 0;
-$lucrosMensais = array_fill(1, 12, 0); // Inicializa o array de lucros mensais
-while ($row = mysqli_fetch_assoc($result)) {
-  $valorVendas = (float)$row["Vd_Tax"] * (int)$row["Itensquant"];
-  $valorCompra = (float)$row["Compra_id"] * (int)$row["Itensquant"];
-  $valorLucro = $valorVendas - $valorCompra;
-  $totalLucros += $valorLucro;
+// Calcula o total de compras realizadas
+$totalCompras = array_sum(array_column($dataArray, 'compra'));
 
-  $mes = (int)date("n", strtotime($row["DataVenda"]));
-  $lucrosMensais[$mes] += $valorLucro; // Acumula o lucro para o respectivo mês
+// Calcula o total de faturamento
+$totalFaturamento = array_sum(array_column($dataArray, 'venda'));
+
+// Calcula o total de lucro
+$totalLucro = array_sum(array_column($dataArray, 'lucro'));
+
+// Calcula o total de lucro mensal e a média
+$totalLucroMensal = 0;
+$mesesComLucro = 0;
+
+foreach ($dataArray as $mes => $valores) {
+  if ($valores['lucro'] > 0) { // Conta apenas meses com lucro
+    $totalLucroMensal += $valores['lucro'];
+    $mesesComLucro++;
+  }
 }
 
-// Calcula a média do lucro mensal até o mês atual
-$somaLucrosMensais = 0;
-for ($mes = 1; $mes <= $currentMonth; $mes++) {
-  $somaLucrosMensais += $lucrosMensais[$mes];
-}
-$mediaLucroMensal = $somaLucrosMensais / $currentMonth;
+$mediaLucroMensal = ($mesesComLucro > 0) ? $totalLucroMensal / $mesesComLucro : 0;
 
-echo '<div class="row"><!--Fim More info-->
+// Exibição dos Small Boxes
+echo '<div class="row">
         <div class="col-lg-3 col-xs-6">
-          <!-- small box -->
           <div class="small-box bg-aqua">
             <div class="inner">
-            <h3>R$ ' . $totalCompras . '</h3>
-              <p>Compra$ realizadas</p>
-            </div>            
+              <h3>R$ ' . number_format($totalCompras, 2, ',', '.') . '</h3>
+              <p>Compras realizadas</p>
+            </div>
             <div class="icon">
               <i class="ion ion-bag"></i>
             </div>
-            <!-- <a href="#" class="small-box-footer">More info <i class="fa fa-arrow-circle-right"></i></a>-->
           </div>
         </div>
-        <!-- ./col -->
         <div class="col-lg-3 col-xs-6">
-          <!-- small box -->
           <div class="small-box bg-green">
             <div class="inner">
-            <h3>R$ ' . $totalVendas . '</h3>
+              <h3>R$ ' . number_format($totalFaturamento, 2, ',', '.') . '</h3>
               <p>Faturamento</p>
             </div>
             <div class="icon">
               <i class="ion ion-stats-bars"></i>
             </div>
-            <!-- <a href="#" class="small-box-footer">More info <i class="fa fa-arrow-circle-right"></i></a>-->
           </div>
         </div>
-        <!-- ./col -->
         <div class="col-lg-3 col-xs-6">
-          <!-- small box -->
           <div class="small-box bg-yellow">
             <div class="inner">
-            <h3>R$ ' . $totalLucros . '</h3>
-
+              <h3>R$ ' . number_format($totalLucro, 2, ',', '.') . '</h3>
               <p>Lucro</p>
             </div>
             <div class="icon">
               <i class="ion ion-person-add"></i>
             </div>
-            <!-- <a href="#" class="small-box-footer">More info <i class="fa fa-arrow-circle-right"></i></a>-->
           </div>
         </div>
-        <!-- ./col -->
         <div class="col-lg-3 col-xs-6">
-          <!-- small box -->
           <div class="small-box bg-red">
             <div class="inner">
               <h3>R$ ' . number_format($mediaLucroMensal, 2, ',', '.') . '</h3>
@@ -144,47 +130,11 @@ echo '<div class="row"><!--Fim More info-->
             <div class="icon">
               <i class="ion ion-pie-graph"></i>
             </div>
-             <!-- <a href="#" class="small-box-footer">More info <i class="fa fa-arrow-circle-right"></i></a>-->
           </div>
         </div>
-        <!-- ./col55 -->
       </div>';
-// Fim More info
-
-// Array com os meses do ano
-$meses = array("", "Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez");
-
-// Cria um array com os dados de vendas e lucro por mês
-$dataArrayVendas = array();
-for ($mes = 0; $mes <= 12; $mes++) {
-  //$dataArrayVendas[] = array($meses[$mes], 0, 0, 0, ''); // [Mês, Valor de vendas (R$), Valor acumulado (R$)]
-  $dataArrayVendas[] = array($meses[$mes], 0, 0, 0, 0, ''); // [Mês, Valor de vendas (R$), Lucro (R$), Valor de compra (R$), Data de compra]
-
-}
-
-// Preenche o array com os dados da compras
-while ($row = mysqli_fetch_assoc($result_compras)) {
-  $mes = (int)date("n", strtotime($row["DataCompra"]));
-  $valorCompra = (float)$row["ValorCompra"] * (int)$row["QuantItens"];
-  $dataArrayVendas[$mes][1] += $valorCompra; // Soma o valor de compra por mês
-}
-
-// Preenche o array com os dados de vendas
-while ($row = mysqli_fetch_assoc($result_vendas)) {
-  $mes = (int)date("n", strtotime($row["DataVenda"]));
-  $valorVendas = (float)$row["Vd_Tax"] * (int)$row["Itensquant"];
-  //$valorLucro = $valorVendas - (float)$row["Compra_id"];
-  $valorLucro = $valorVendas - (float)$row["Compra_id"] * (int)$row["Itensquant"];
-  $dataArrayVendas[$mes][3] += $valorVendas; // Soma o valor de vendas por mês
-  $dataArrayVendas[$mes][2] += $valorLucro; // Soma o valor do lucro por mês    
-}
-
-// Fecha a conexão com o banco de dados
-mysqli_close($conexao->SQL);
-
-// Cria o gráfico utilizando a API do Google Charts
 ?>
-<!-- Gráfico HTML -->
+
 <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
 <script type="text/javascript">
   google.charts.load("current", {
@@ -192,22 +142,15 @@ mysqli_close($conexao->SQL);
   });
   google.charts.setOnLoadCallback(drawChart);
 
-
   function drawChart() {
     var data = google.visualization.arrayToDataTable([
-      ['Mês', 'Valor de compra (R$)', 'Faturamento (R$)', 'Lucro (R$)', {
-        role: 'style'
-      }], // Cabeçalho das colunas
-      <?php foreach ($dataArrayVendas as $venda) { ?>
-
-        // Defina as cores com base no valor de Vd_Tax
-        <?php $color = ($venda[1] > $venda[2]) ? 'SpringGreen' : 'SpringGreen'; ?>
-        <?php echo json_encode([$venda[0], $venda[1], $venda[3], $venda[2],   $color]) . ','; ?>
+      ['Mês', 'Compras (R$)', 'Faturamento (R$)', 'Lucro (R$)'],
+      <?php foreach ($dataArray as $mes => $valores) { ?>['<?php echo $meses[$mes - 1]; ?>', <?php echo $valores['compra']; ?>, <?php echo $valores['venda']; ?>, <?php echo $valores['lucro']; ?>],
       <?php } ?>
     ]);
 
     var options = {
-      title: 'Gráfico de Vendas & Lucro',
+      title: 'Gráfico de Compras, Faturamento e Lucro',
       legend: {
         position: 'bottom'
       },
@@ -219,26 +162,19 @@ mysqli_close($conexao->SQL);
       },
       colors: ['DodgerBlue', 'OrangeRed', 'SpringGreen'],
       width: '100%',
-      height: 300,
+      height: 400,
     };
 
-    var chart = new google.visualization.ColumnChart(document.getElementById("columnchart_values"));
+    var chart = new google.visualization.ColumnChart(document.getElementById('chart_div'));
     chart.draw(data, options);
   }
 </script>
-<div class="box box-danger" id="columnchart_values"></div>
-
-<!-- Fim do Gráfico HTML -->
-<div class="row">
-  <div class="col-md-6">
-
-  </div>
-</div>
+<div id="chart_div"></div>
 
 <?php
-// Fecha a seção do conteúdo e imprime o rodapé HTML
-echo '</section>';
-echo '</div >';
-//echo $footer;
+// Fecha a conexão
+mysqli_close($conexao->SQL);
+
+echo '</section></div>';
 echo $javascript;
 ?>
