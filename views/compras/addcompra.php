@@ -79,7 +79,7 @@ if ($perm != 1) {
             <form id="form" action="addcompra.php" method="post">
               <div class="box-body">
                 <!--<form id="form1" action="index.php" method="post">-->
-                <div class="col-lg-6">
+                <div class="col-lg-11">
                   <label for="exampleInputEmail1">Digite o SKU ou Nome do Produto</label>
                   <div class="input-group">
                     <!--<label for="exampleInputEmail1">Código</label>-->
@@ -133,14 +133,14 @@ if ($perm != 1) {
                 </div>
 
                 <!--script preenchimento automatico quando NULL-->
-                  <script>
-                      document.getElementById('exampleInputEmail1').addEventListener('blur', function() {
-                          if (!this.value) {
-                              this.value = 'AA000000000AA';
-                          }
-                      });
-                  </script>
-                 <!--Fim do script preenchimento automatico quando NULL-->
+                <script>
+                  document.getElementById('exampleInputEmail1').addEventListener('blur', function() {
+                    if (!this.value) {
+                      this.value = 'AA000000000AA';
+                    }
+                  });
+                </script>
+                <!--Fim do script preenchimento automatico quando NULL-->
                 <div class="col-sm-3">
                   <label for="exampleInputEmail1">Valor da Compra</label>
                   <div class="input-group">

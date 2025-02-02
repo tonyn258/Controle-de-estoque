@@ -12,7 +12,7 @@ class Compras extends Connect
       die("Conexão com o banco de dados falhou: " . mysqli_connect_error());
     }
     $this->query = "SELECT * FROM `compras` ORDER BY `IdCompra` DESC";
-    
+
 
     $this->result = mysqli_query($this->SQL, $this->query) or die(mysqli_error($this->SQL));
     $row = array();
@@ -68,7 +68,7 @@ class Compras extends Connect
         $DataCompra  = $row['DataCompra'];
         $DataEntrega = $row['DataEntrega'];
         $QuantItens  = $row['QuantItens'];
-        
+
 
         // Declare a variável $array fora do bloco condicional
         $array = array('compras' => [
@@ -80,7 +80,7 @@ class Compras extends Connect
           'Data'            => $DataCompra,
           'Entrega'         => $DataEntrega,
           'Saldo'           => $QuantItens,
-          
+
         ]);
 
         return $array; // feche a chave da função
@@ -106,7 +106,7 @@ class Compras extends Connect
               WHERE `IdCompra`    = '$IdCompra'";
 
     if ($this->result = mysqli_query($this->SQL, $this->query) or die(mysqli_error($this->SQL))) {
-      
+
       header('Location: ../../views/compras/index.php?alert=1');
     } else {
       header('Location: ../../views/compras/index.php?alert=0');

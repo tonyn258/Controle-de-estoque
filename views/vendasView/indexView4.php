@@ -46,6 +46,8 @@ foreach ($resps as $row) {
     if (isset($vendasAgrupadas[$CodRastreioV])) {
         $vendasAgrupadas[$CodRastreioV]['Vd_Tax'] += $row['Vd_Tax'];
         $vendasAgrupadas[$CodRastreioV]['Venda_Total'] += $row['Venda_Total']; // Acumula o valor de Venda_Total
+        $vendasAgrupadas[$CodRastreioV]['Diferenca_Quantidade'] += $row['Diferenca_Quantidade']; // Acumula o valor de Diferenca_Quantidade
+        //$vendasAgrupadas[$CodRastreioV]['Diferenca_Quantidade'] += $row['Itensquant']; // Soma as quantidades
         $vendasAgrupadas[$CodRastreioV]['Produtos'][] = [
             'NomeProduto' => $row['NomeProduto'],
             'Itensquant' => $row['Itensquant'],
@@ -59,6 +61,8 @@ foreach ($resps as $row) {
             'UF' => $row['UF'],
             'Vd_Tax' => $row['Vd_Tax'],  // Adiciona Vd_Tax
             'Venda_Total' => $row['Venda_Total'], // Adiciona Venda_Total
+            'Diferenca_Quantidade' => $row['Diferenca_Quantidade'], // Adiciona Diferenca_Quantidade
+            //'Diferenca_Quantidade' => $row['Itensquant'], // Inicializa com o valor de Itensquant
             'Produtos' => [[
                 'NomeProduto' => $row['NomeProduto'],
                 'Itensquant' => $row['Itensquant'],
@@ -75,6 +79,8 @@ echo '<ul class="list-group" id="clientesList">'; // Adiciona o ID da lista para
 foreach ($vendasAgrupadas as $CodRastreioV => $venda) {
     // Formatação da Venda_Total como moeda brasileira
     $Venda_Total = 'R$' . number_format($venda['Venda_Total'], 2, ',', '.');
+    $Diferenca_Quantidade = 'R$' . number_format($venda['Diferenca_Quantidade'], 2, ',', '.');
+    //$Diferenca_Quantidade = $venda['Diferenca_Quantidade'];
     $nomeCliente = $venda['NomeCliente'];
     $Cidade = $venda['Cidade'];
     $UF = $venda['UF'];
@@ -82,7 +88,7 @@ foreach ($vendasAgrupadas as $CodRastreioV => $venda) {
     // Exibição no formato solicitado
     echo '<li class="list-group-item">
             <div style="cursor:pointer;" onclick="toggleDetails(this)">
-                ' . $CodRastreioV . ' - ' . $nomeCliente . ' - ' . $Cidade . ' - ' . $UF . ' - ' . $Venda_Total . '
+                ' . $CodRastreioV . ' - ' . $nomeCliente . ' - ' . $Cidade . ' - ' . $UF . ' - ' . $Venda_Total . ' - ' . $Diferenca_Quantidade . '
             </div>
             <div class="product-details" style="display:none; margin-top: 10px;">';
 
