@@ -15,7 +15,7 @@ class Vendas extends Connect
                      c.skuProduto, c.model, c.NomeProduto, 
                      cl.NomeCliente, cl.cpfCliente, cl.idCliente,v.Vd_Tax
               FROM vendas v
-              LEFT JOIN compras c ON v.Id_Compra = c.IdCompra
+              LEFT JOIN anuncio c ON v.anuncio_id = c.IdCompra
               LEFT JOIN cliente cl ON v.cliente_idCliente = cl.idCliente
               $order_by";
 
@@ -33,20 +33,20 @@ class Vendas extends Connect
   }
 
   // Função para inserir uma nova venda no banco de dados
-  function insertVenda($Itensquant, $valor, $Id_Compra, $cliente_idCliente, $DataVenda, $CodRastreioV,$Vd_Tax)
+  function insertVenda($Itensquant, $valor, $anuncio_id, $cliente_idCliente, $DataVenda, $CodRastreioV,$Vd_Tax)
   {
     // Escapa caracteres especiais para evitar SQL injection
     $Itensquant        = mysqli_real_escape_string($this->SQL, $Itensquant);
     $valor             = mysqli_real_escape_string($this->SQL, $valor);
-    $Id_Compra         = mysqli_real_escape_string($this->SQL, $Id_Compra);
+    $anuncio_id        = mysqli_real_escape_string($this->SQL, $anuncio_id);
     $cliente_idCliente = mysqli_real_escape_string($this->SQL, $cliente_idCliente);
     $DataVenda         = mysqli_real_escape_string($this->SQL, $DataVenda);
     $CodRastreioV      = mysqli_real_escape_string($this->SQL, $CodRastreioV);
     $Vd_Tax      = mysqli_real_escape_string($this->SQL, $Vd_Tax);
 
     // Query de inserção
-    $query = "INSERT INTO `vendas`(`Itensquant`, `valor`, `Id_Compra`, `cliente_idCliente`, `DataVenda`, `CodRastreioV`,`Vd_Tax`) 
-              VALUES ('$Itensquant', '$valor', '$Id_Compra', '$cliente_idCliente', '$DataVenda', '$CodRastreioV', '$Vd_Tax')";
+    $query = "INSERT INTO `vendas`(`Itensquant`, `valor`, `anuncio_id`, `cliente_idCliente`, `DataVenda`, `CodRastreioV`,`Vd_Tax`) 
+              VALUES ('$Itensquant', '$valor', '$anuncio_id', '$cliente_idCliente', '$DataVenda', '$CodRastreioV', '$Vd_Tax')";
     
     $result = mysqli_query($this->SQL, $query) or die(mysqli_error($this->SQL));
     

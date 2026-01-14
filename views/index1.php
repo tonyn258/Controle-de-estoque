@@ -1,7 +1,6 @@
 <?php
 require_once '../App/auth.php';
 require_once '../layout/script.php';
-require_once '../views/index.php';
 require_once '../App/Models/vendas.class.php';
 require_once '../App/Models/compras.class.php';
 

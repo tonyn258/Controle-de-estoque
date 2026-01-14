@@ -1,54 +1,33 @@
 <!DOCTYPE html>
-<html lang="br">
-
+<html lang="pt-br">
 <head>
-  <link rel="stylesheet" href='css/login.css'><!-- importação do arquivo CSS -->
-  <!--<script src="script/login.js"></script>  importação do arquivo JavaScript -->
-
-
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Minha Loja</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Particle Network</title>
+    <link rel="stylesheet" href="assets/css/style.css">
 </head>
+<body>
+    <canvas id="particleCanvas"></canvas>
 
-<body class="aurora">
-  <section>
-    <div class="form-box">
-      <div class="form-value">
-        <form action="App/session.php" method="post" class="form">
-
-          <h2>Login</h2>
-
-          <div class="input-box">
-            <ion-icon name="person"></ion-icon>
-            <input type="text" id="username" name="username" value="Antonio Carlos" placeholder="Antonio Carlos" class="form-control" required>
-            <span class="glyphicon glyphicon-envelope form-control-feedback"></span>
-            <label for="username"></label>
-          </div>
-
-          <div class="input-box">
-            <ion-icon name="lock"></ion-icon>
-            <input type="password" id="password" name="password" value="admin" placeholder="admin" class="form-control" required>
-            <span class="glyphicon glyphicon-lock form-control-feedback"></span>
-            <label for="password"></label>
-          </div>
-
-
-
-          <div class="row">
-            <div class="col-xs-4">
-              <button>Entrar</button>
-            </div>
-          </div>
-
-      </div>
-      </form>
-    </div>
+    <div class="login-container">
+        <h2>Login</h2>
+        <?php
+        if (isset($_GET['alert'])) {
+            if ($_GET['alert'] == 1) {
+                echo '<p style="color: #dd4b39; margin-bottom: 15px; font-weight: 600;">Usuário não encontrado!</p>';
+            } elseif ($_GET['alert'] == 2) {
+                echo '<p style="color: #dd4b39; margin-bottom: 15px; font-weight: 600;">Senha incorreta!</p>';
+            }
+        }
+        ?>
+    <form action="App/session.php" method="post" class="form">   
+        <input type="text" id="username" name="username"placeholder="Nome" class="form-control" required>
+        <input type="password" id="password" name="password" placeholder="Senha" class="form-control" required>
+        <button>Entrar</button>
+    </form>
     </div>
 
-  </section>
-  <script src="https://unpkg.com/ionicons@4.5.10-0/dist/ionicons.js"></script>
-  <link href="https://unpkg.com/ionicons@4.5.10-0/dist/css/ionicons.min.css" rel="stylesheet">
+    <script src="assets/js/scriptcanva.js"></script>
 </body>
-
 </html>

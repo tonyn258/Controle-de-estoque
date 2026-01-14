@@ -13,8 +13,7 @@ class Vendas extends Connect
     // Nova query conforme solicitado, juntando as tabelas vendas, cliente e compras
     $query = "SELECT v.CodRastreioV, 
                      c.NomeCliente, 
-                     c.Cidade, 
-                     c.UF, 
+                     c.CepCliente,                      
                      cp.NomeProduto,
                      v.Itensquant,
                      v.Vd_Tax,
@@ -22,7 +21,7 @@ class Vendas extends Connect
                      v.Venda_Total
               FROM vendas v
               JOIN cliente c ON v.cliente_idCliente = c.idCliente
-              JOIN compras cp ON v.Id_Compra = cp.IdCompra
+              JOIN anuncio cp ON v.anuncio_id = cp.IdCompra
               $order_by";
 
     $this->result = mysqli_query($this->SQL, $query) or die(mysqli_error($this->SQL));
@@ -39,12 +38,12 @@ class Vendas extends Connect
   }
 
   // Função para inserir uma nova venda no banco de dados
-  function insertVenda($Itensquant, $valor, $Id_Compra, $cliente_idCliente, $DataVenda, $CodRastreioV, $Vd_Tax, $Venda_Total, $Diferenca_Quantidade)
+  function insertVenda($Itensquant, $valor, $anuncio_id, $cliente_idCliente, $DataVenda, $CodRastreioV, $Vd_Tax, $Venda_Total, $Diferenca_Quantidade)
   {
     // Escapa caracteres especiais para evitar SQL injection
     $Itensquant        = mysqli_real_escape_string($this->SQL, $Itensquant);
     $valor             = mysqli_real_escape_string($this->SQL, $valor);
-    $Id_Compra         = mysqli_real_escape_string($this->SQL, $Id_Compra);
+    $anuncio_id        = mysqli_real_escape_string($this->SQL, $anuncio_id);
     $cliente_idCliente = mysqli_real_escape_string($this->SQL, $cliente_idCliente);
     $DataVenda         = mysqli_real_escape_string($this->SQL, $DataVenda);
     $CodRastreioV      = mysqli_real_escape_string($this->SQL, $CodRastreioV);
@@ -53,8 +52,8 @@ class Vendas extends Connect
     $Diferenca_Quantidade       = mysqli_real_escape_string($this->SQL, $Diferenca_Quantidade);
 
     // Query de inserção
-    $query = "INSERT INTO `vendas`(`Itensquant`, `valor`, `Id_Compra`, `cliente_idCliente`, `DataVenda`, `CodRastreioV`, `Vd_Tax` , `Venda_Total` , `Diferenca_Quantidade`) 
-              VALUES ('$Itensquant', '$valor', '$Id_Compra', '$cliente_idCliente', '$DataVenda', '$CodRastreioV', '$Vd_Tax' , '$Venda_Total','$Diferenca_Quantidade')";
+    $query = "INSERT INTO `vendas`(`Itensquant`, `valor`, `anuncio_id`, `cliente_idCliente`, `DataVenda`, `CodRastreioV`, `Vd_Tax` , `Venda_Total` , `Diferenca_Quantidade`) 
+              VALUES ('$Itensquant', '$valor', '$anuncio_id', '$cliente_idCliente', '$DataVenda', '$CodRastreioV', '$Vd_Tax' , '$Venda_Total','$Diferenca_Quantidade')";
 
     $result = mysqli_query($this->SQL, $query) or die(mysqli_error($this->SQL));
 

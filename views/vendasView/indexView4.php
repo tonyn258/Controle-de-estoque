@@ -57,8 +57,7 @@ foreach ($resps as $row) {
         // Caso contrário, crie um novo registro
         $vendasAgrupadas[$CodRastreioV] = [
             'NomeCliente' => $row['NomeCliente'],
-            'Cidade' => $row['Cidade'],
-            'UF' => $row['UF'],
+            'CepCliente' => $row['CepCliente'],
             'Vd_Tax' => $row['Vd_Tax'],  // Adiciona Vd_Tax
             'Venda_Total' => $row['Venda_Total'], // Adiciona Venda_Total
             'Diferenca_Quantidade' => $row['Diferenca_Quantidade'], // Adiciona Diferenca_Quantidade
@@ -82,13 +81,12 @@ foreach ($vendasAgrupadas as $CodRastreioV => $venda) {
     $Diferenca_Quantidade = 'R$' . number_format($venda['Diferenca_Quantidade'], 2, ',', '.');
     //$Diferenca_Quantidade = $venda['Diferenca_Quantidade'];
     $nomeCliente = $venda['NomeCliente'];
-    $Cidade = $venda['Cidade'];
-    $UF = $venda['UF'];
+    $CepCliente = $venda['CepCliente'];
 
     // Exibição no formato solicitado
     echo '<li class="list-group-item">
             <div style="cursor:pointer;" onclick="toggleDetails(this)">
-                ' . $CodRastreioV . ' - ' . $nomeCliente . ' - ' . $Cidade . ' - ' . $UF . ' - ' . $Venda_Total . ' - ' . $Diferenca_Quantidade . '
+                ' . $CodRastreioV . ' - ' . $nomeCliente . ' - ' . $CepCliente . ' - ' . $Venda_Total . ' - ' . $Diferenca_Quantidade . '
             </div>
             <div class="product-details" style="display:none; margin-top: 10px;">';
 

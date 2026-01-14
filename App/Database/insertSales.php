@@ -2,36 +2,46 @@
 require_once '../../App/auth.php';
 require_once '../../App/Models/sales.class.php';
 
-if (isset($_POST['idItem']) > 0 && 
-    !empty($_POST['qtde'])       &&
+if (isset($_POST['idItem']) && 
+    !empty($_POST['qtd'])       &&
     !empty($_POST['NomeCliente']) &&
     !empty($_POST['cpfCliente']) &&
-    !empty($_POST['FoneCliente']) &&
-    !empty($_POST['Cidade']) &&
-    !empty($_POST['UF']) &&
-    !empty($_POST['DataVenda']) &&
-    !empty($_POST['CodRastreioV'])&&
-    !empty($_POST['TxMl']) &&
-    !empty($_POST['TxFret']) &&
-    !empty($_POST['Vd_Tax'])     
+    !empty($_POST['CepCliente']) &&
+    !empty($_POST['DataVenda'])
 
     ){      
 
   $idItem       = $_POST['idItem'];
-  $quant        = $_POST['qtde'];
+  $quant        = $_POST['qtd'];
   $NomeCliente  = $_POST['NomeCliente'];
   $cpfCliente   = $_POST['cpfCliente'];
-  $FoneCliente  = $_POST['FoneCliente'];
-  $Cidade       = $_POST['Cidade'];
-  $UF           = $_POST['UF'];
+  $CepCliente  = $_POST['CepCliente'];
   $DataVenda    = $_POST['DataVenda'];
-  $CodRastreioV = $_POST['CodRastreioV'];
-  $TxMl         = $_POST['TxMl'];
-  $TxFret       = $_POST['TxFret'];
-  $Vd_Tax       = $_POST['Vd_Tax'];  
+  $CodRastreioV = $_POST['CodRastreioV'] ?? '';
+  
+  // Recebe o array de preços do carrinho, se existir
+  $Vd_Tax_Array = isset($_POST['Vd_Tax_Array']) ? $_POST['Vd_Tax_Array'] : [];
+
   $vendas = new Vendas;
-  $vendas->itensVendidos($idItem, $quant,$NomeCliente,$cpfCliente,$FoneCliente,$Cidade,$UF,$idUsuario,
-  $DataVenda, $CodRastreioV,$TxMl,$TxFret,$Vd_Tax);
+  
+  // O loop agora acontece aqui ou dentro da classe?
+  // O arquivo original tinha um loop foreach($_POST['idItem']...)
+  // Vamos manter a lógica original de loop, mas passando o preço correto.
+
+    foreach ($_POST['idItem'] as $key => $error) {
+        $id = $_POST['idItem'][$key];
+        $quant = $_POST['qtd'][$key];
+        
+        // Pega o preço específico deste item, ou 0 se não definido
+        $precoItem = isset($Vd_Tax_Array[$key]) ? $Vd_Tax_Array[$key] : 0;
+
+        $vendas->itensVendidos($id, $quant, $NomeCliente, $cpfCliente, $CepCliente, $idUsuario, $DataVenda, $CodRastreioV, $precoItem);
+    }
+    
+    // Limpa o carrinho após o sucesso (opcional, mas recomendado)
+    unset($_SESSION['carrinho']);
+    unset($_SESSION['Cliente'], $_SESSION['cpf'], $_SESSION['Cep']);
+    
 }else{     
   $_SESSION['msg'] = 'Falta preencher alguns campos obrigatorios!';
   header('Location: ../../views/sales/');

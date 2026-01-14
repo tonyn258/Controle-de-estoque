@@ -5,10 +5,10 @@ require_once 'connect.php';
 
 class Vendas extends Connect
 {
-    public function itensVendidos($Id_Compra, $quant,$NomeCliente,$cpfCliente,$FoneCliente,$Cidade,$UF,$idUsuario,$DataVenda, $CodRastreioV,$TxMl,$TxFret,$Vd_Tax)
+    public function itensVendidos($anuncio_id, $quant, $NomeCliente, $cpfCliente, $CepCliente, $idUsuario, $DataVenda, $CodRastreioV, $Vd_Tax)
     {
         // Verificar se o item de compra existe
-        $this->query = "SELECT * FROM `compras` WHERE `IdCompra` = '$Id_Compra'";
+        $this->query = "SELECT * FROM `anuncio` WHERE `IdCompra` = '$anuncio_id'";
         $this->result = mysqli_query($this->SQL, $this->query) or die(mysqli_error($this->SQL));
 
         if ($this->result) {
@@ -23,7 +23,7 @@ class Vendas extends Connect
 
                     $valor = ($row['ValorCompra'] * $quant);
                     $Compra_id = $row['ValorCompra'];
-                    $compra_idData = $row['DataEntrega'];
+                    $anuncio_data = $row['DataEntrega'];
 
                     $id = Vendas::idCliente($cpfCliente); // Verifica se o cliente existe no DB.
                     if ($id > 0) { // Se o cliente existir, Retorne o ID do cliente
@@ -31,18 +31,18 @@ class Vendas extends Connect
                     } else {
 
                         // Caso o cliente não exista, adicionar um novo cliente
-                        $this->NovoClient = "INSERT INTO `cliente`(`idCliente`, `NomeCliente`, `Cidade`, `UF`, `FoneCliente`, `cpfCliente`, `statusCliente`, `Usuario_idUsuario`) 
-                    VALUES (NULL,'$NomeCliente','$Cidade','$UF','$FoneCliente','$cpfCliente',1,'$idUsuario')";
+                        $this->NovoClient = "INSERT INTO `cliente`(`idCliente`, `NomeCliente`, `CepCliente`, `cpfCliente`, `statusCliente`, `Usuario_idUsuario`) 
+                    VALUES (NULL,'$NomeCliente','$CepCliente','$cpfCliente',1,'$idUsuario')";
                         if (mysqli_query($this->SQL, $this->NovoClient) or die(mysqli_error($this->SQL))) {
                             $idCliente = mysqli_insert_id($this->SQL);
                         }
                     }
                     // Registrar a venda
-                    $this->query = "INSERT INTO `vendas`(`Itensquant`,`Compra_id`, `valor`, `Id_Compra`,`cliente_idCliente`,`compra_idData`, `DataVenda`, `CodRastreioV`,`TxMl`,`TxFret`,`Vd_Tax`) 
-                                                VALUES ('$quant','$Compra_id','$valor','$Id_Compra','$idCliente','$compra_idData','$DataVenda','$CodRastreioV','$TxMl','$TxFret','$Vd_Tax')";//,'$TxMl','$TxFret','$Vd_Tax'
+                    $this->query = "INSERT INTO `vendas`(`Itensquant`,`Compra_id`, `valor`, `anuncio_id`,`cliente_idCliente`,`anuncio_data`, `DataVenda`, `CodRastreioV`,`Vd_Tax`) 
+                                                VALUES ('$quant','$Compra_id','$valor','$anuncio_id','$idCliente','$anuncio_data','$DataVenda','$CodRastreioV','$Vd_Tax')";
                     if ($this->result = mysqli_query($this->SQL, $this->query) or die(mysqli_error($this->SQL))) {
                         // Atualizar a quantidade de itens vendidos na tabela de compras
-                        $this->query = "UPDATE `compras` SET `QuantItensVend` = '$quantotal' WHERE `IdCompra`= '$Id_Compra '";
+                        $this->query = "UPDATE `anuncio` SET `QuantItensVend` = '$quantotal' WHERE `IdCompra`= '$anuncio_id '";
                         if ($this->result = mysqli_query($this->SQL, $this->query) or die(mysqli_error($this->SQL))) {
 
                             $_SESSION['msg'] = 'Venda efetuada';
@@ -80,4 +80,3 @@ class Vendas extends Connect
 }//Class
 
        
-

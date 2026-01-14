@@ -1,180 +1,169 @@
 <?php
 require_once '../App/auth.php';
-require_once '../layout/script.php';
-require_once '../views/index.php';
-require_once '../App/Models/vendas.class.php';
-require_once '../App/Models/compras.class.php';
-
-echo $head;
-echo $header;
-echo $aside;
-echo '<div class="content-wrapper"><section class="content">';
-
-// Conexão com o banco de dados
-$conexao = new connect();
-$vendas = new Vendas($conexao);
-$compras = new Compras($conexao);
-
-// Obtém o ano atual
-$currentYear = date('Y');
-
-// Verifica se o usuário selecionou um ano no formulário
-$selectedYear = isset($_POST['year']) ? $_POST['year'] : $currentYear;
-
-// Formulário de seleção de ano
 ?>
-<form method="post" action="">
-  <label for="year">Selecione o ano:</label>
-  <select name="year" id="year">
-    <option value="all" <?php if ($selectedYear === 'all') echo 'selected'; ?>>Todos os anos</option>
-    <?php for ($i = $currentYear; $i >= 2021; $i--) { ?>
-      <option value="<?php echo $i; ?>" <?php if ($i == $selectedYear) echo 'selected'; ?>><?php echo $i; ?></option>
-    <?php } ?>
-  </select>
-  <button type="submit">Filtrar</button>
-</form>
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Vendas</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: #f4f6f9;
+            font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;
+        }
 
-<?php
-// Consultas para compras e vendas
-$sql_compras = ($selectedYear === 'all') ?
-  "SELECT DataCompra, ValorCompra, QuantItens FROM compras" :
-  "SELECT DataCompra, ValorCompra, QuantItens FROM compras WHERE YEAR(DataCompra) = $selectedYear";
+        .content {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-$sql_vendas = ($selectedYear === 'all') ?
-  "SELECT DataVenda, Venda_Total, Diferenca_Quantidade FROM vendas" :
-  "SELECT DataVenda, Venda_Total, Diferenca_Quantidade FROM vendas WHERE YEAR(DataVenda) = $selectedYear";
+        .dashboard-container {
+            background: #ffffff;
+            width: 100%;
+            max-width: 1100px;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            text-align: center;
+            margin: 20px;
+        }
 
-$result_compras = mysqli_query($conexao->SQL, $sql_compras);
-$result_vendas = mysqli_query($conexao->SQL, $sql_vendas);
+        .dashboard-header h1 {
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            font-size: 2.5rem;
+            letter-spacing: -0.5px;
+        }
 
-// Inicializa o array $dataArray com os meses do ano e valores padrão
-$meses = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-$dataArray = array_fill(1, 12, ['compra' => 0, 'venda' => 0, 'lucro' => 0]);
+        .dashboard-header .subtitle {
+            color: #7f8c8d;
+            font-size: 1.1rem;
+            margin-bottom: 40px;
+            font-weight: 400;
+        }
 
-// Preenche os dados de compras
-while ($row = mysqli_fetch_assoc($result_compras)) {
-  $mes = (int)date("n", strtotime($row['DataCompra']));
-  $dataArray[$mes]['compra'] += $row['ValorCompra'] * $row['QuantItens'];
-}
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 25px;
+            padding: 10px;
+        }
 
-// Preenche os dados de vendas e lucro
-while ($row = mysqli_fetch_assoc($result_vendas)) {
-  $mes = (int)date("n", strtotime($row['DataVenda']));
-  $dataArray[$mes]['venda'] += $row['Venda_Total'];
-  $dataArray[$mes]['lucro'] += $row['Diferenca_Quantidade'];
-}
+        .menu-card {
+            background: #ffffff;
+            border: 1px solid #f0f0f0;
+            border-radius: 12px;
+            padding: 35px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+            position: relative;
+            overflow: hidden;
+        }
 
-// Calcula o total de compras realizadas
-$totalCompras = array_sum(array_column($dataArray, 'compra'));
+        .menu-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+            border-color: #3c8dbc;
+        }
 
-// Calcula o total de faturamento
-$totalFaturamento = array_sum(array_column($dataArray, 'venda'));
+        .menu-card .icon-wrapper {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            line-height: 1;
+            transition: transform 0.3s ease;
+        }
 
-// Calcula o total de lucro
-$totalLucro = array_sum(array_column($dataArray, 'lucro'));
+        .menu-card:hover .icon-wrapper {
+            transform: scale(1.1);
+        }
 
-// Calcula o total de lucro mensal e a média
-$totalLucroMensal = 0;
-$mesesComLucro = 0;
+        .menu-card .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #34495e;
+            transition: color 0.3s ease;
+        }
 
-foreach ($dataArray as $mes => $valores) {
-  if ($valores['lucro'] > 0) { // Conta apenas meses com lucro
-    $totalLucroMensal += $valores['lucro'];
-    $mesesComLucro++;
-  }
-}
+        .menu-card:hover .card-title {
+            color: #3c8dbc;
+        }
 
-$mediaLucroMensal = ($mesesComLucro > 0) ? $totalLucroMensal / $mesesComLucro : 0;
+        .dashboard-footer {
+            margin-top: 50px;
+            border-top: 1px solid #f0f0f0;
+            padding-top: 20px;
+            color: #95a5a6;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
 
-// Exibição dos Small Boxes
-echo '<div class="row">
-        <div class="col-lg-3 col-xs-6">
-          <div class="small-box bg-aqua">
-            <div class="inner">
-              <h3>R$ ' . number_format($totalCompras, 2, ',', '.') . '</h3>
-              <p>Compras realizadas</p>
-            </div>
-            <div class="icon">
-              <i class="ion ion-bag"></i>
-            </div>
-          </div>
+<section class="content">
+    <div class="dashboard-container">
+        <div class="dashboard-header">
+            <h1>Sistema de Vendas</h1>
+            <p class="subtitle">Controle de Estoque e Vendas</p>
         </div>
-        <div class="col-lg-3 col-xs-6">
-          <div class="small-box bg-green">
-            <div class="inner">
-              <h3>R$ ' . number_format($totalFaturamento, 2, ',', '.') . '</h3>
-              <p>Faturamento</p>
-            </div>
-            <div class="icon">
-              <i class="ion ion-stats-bars"></i>
-            </div>
-          </div>
+
+        <div class="menu-grid">
+            <a href="sales/" class="menu-card">
+                <div class="icon-wrapper">🛒</div>
+                <span class="card-title">Nova Venda</span>
+            </a>
+
+            <a href="Grafico/dashboard.php" class="menu-card">
+                <div class="icon-wrapper">📊</div>
+                <span class="card-title">Relatórios</span>
+            </a>
+
+            <a href="cliente/" class="menu-card">
+                <div class="icon-wrapper">👥</div>
+                <span class="card-title">Clientes</span>
+            </a>
+
+            <a href="usuarios/" class="menu-card">
+                <div class="icon-wrapper">👤</div>
+                <span class="card-title">Usuários</span>
+            </a>
+
+            <a href="produto/" class="menu-card">
+                <div class="icon-wrapper">📦</div>
+                <span class="card-title">Produtos</span>
+            </a>
+
+            <a href="catalogo/" class="menu-card">
+                <div class="icon-wrapper">🛍️</div>
+                <span class="card-title">Catálogo</span>
+            </a>
+
+            <a href="compras/" class="menu-card">
+                <div class="icon-wrapper">🧾</div>
+                <span class="card-title">Compras</span>
+            </a>
+
+            <a href="estoque/index.php" class="menu-card">
+                <div class="icon-wrapper">🏬</div>
+                <span class="card-title">Estoque</span>
+            </a>
         </div>
-        <div class="col-lg-3 col-xs-6">
-          <div class="small-box bg-yellow">
-            <div class="inner">
-              <h3>R$ ' . number_format($totalLucro, 2, ',', '.') . '</h3>
-              <p>Lucro</p>
-            </div>
-            <div class="icon">
-              <i class="ion ion-person-add"></i>
-            </div>
-          </div>
+
+        <div class="dashboard-footer">
+            <p>Sistema desenvolvido com PHP 8+ e MySQL</p>
+            <p>Acesse via: <strong>http://localhost/xampp/htdocs/www/projetos/website/</strong></p>
         </div>
-        <div class="col-lg-3 col-xs-6">
-          <div class="small-box bg-red">
-            <div class="inner">
-              <h3>R$ ' . number_format($mediaLucroMensal, 2, ',', '.') . '</h3>
-              <p>Lucro mensal</p>
-            </div>
-            <div class="icon">
-              <i class="ion ion-pie-graph"></i>
-            </div>
-          </div>
-        </div>
-      </div>';
-?>
+    </div>
+</section>
 
-<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-<script type="text/javascript">
-  google.charts.load("current", {
-    packages: ["corechart"]
-  });
-  google.charts.setOnLoadCallback(drawChart);
-
-  function drawChart() {
-    var data = google.visualization.arrayToDataTable([
-      ['Mês', 'Compras (R$)', 'Faturamento (R$)', 'Lucro (R$)'],
-      <?php foreach ($dataArray as $mes => $valores) { ?>['<?php echo $meses[$mes - 1]; ?>', <?php echo $valores['compra']; ?>, <?php echo $valores['venda']; ?>, <?php echo $valores['lucro']; ?>],
-      <?php } ?>
-    ]);
-
-    var options = {
-      title: 'Gráfico de Compras, Faturamento e Lucro',
-      legend: {
-        position: 'bottom'
-      },
-      hAxis: {
-        title: 'Mês'
-      },
-      vAxis: {
-        title: 'Valor (R$)'
-      },
-      colors: ['DodgerBlue', 'OrangeRed', 'SpringGreen'],
-      width: '100%',
-      height: 400,
-    };
-
-    var chart = new google.visualization.ColumnChart(document.getElementById('chart_div'));
-    chart.draw(data, options);
-  }
-</script>
-<div id="chart_div"></div>
-
-<?php
-// Fecha a conexão
-mysqli_close($conexao->SQL);
-
-echo '</section></div>';
-echo $javascript;
-?>
+</body>
+</html>

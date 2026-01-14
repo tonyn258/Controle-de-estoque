@@ -5,23 +5,21 @@ require_once '../Models/cliente.class.php';
 if(isset($_POST['upload']) == 'Cadastrar'){
 
 $NomeCliente  = $_POST['NomeCliente'];
-$Cidade       = $_POST['Cidade'];
-$UF           = $_POST['UF'];
-$FoneCliente = $_POST['FoneCliente'];
 $cpfCliente   = $_POST['cpfCliente'];
+$CepCliente   = $_POST['CepCliente'];
 
  
 $cliente = new Cliente;
 
-if($NomeCliente != NULL && $Cidade != NULL && $UF != NULL && $FoneCliente != NULL && $cpfCliente != NULL){
+if($NomeCliente != NULL && $cpfCliente != NULL && $CepCliente != NULL){
 
 		if (!isset($_POST['idCliente']))
 		{
 
-			$result = $cliente->InsertCliente($NomeCliente, $Cidade, $UF, $FoneCliente, $cpfCliente, $idUsuario, $perm);
+			$result = $cliente->InsertCliente($NomeCliente, $cpfCliente, $CepCliente, $idUsuario, $perm);
 	}else{
 			$idCliente = $_POST['idCliente'];
-			$result = $cliente->UpdateCliente($idCliente, $NomeCliente, $Cidade, $UF, $FoneCliente, $cpfCliente, $idUsuario, $perm);				
+			$result = $cliente->UpdateCliente($idCliente, $NomeCliente, $cpfCliente, $CepCliente, $idUsuario, $perm);				
 		}	
 			$_SESSION['alert'] = $result;
 		    header('Location: ../../views/cliente/index.php');		

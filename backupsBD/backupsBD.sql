@@ -34,7 +34,7 @@ CREATE TABLE `cliente` (
   `Usuario_idUsuario` int(11) DEFAULT NULL,
   PRIMARY KEY (`idCliente`),
   KEY `fk_Cliente_Usuario1_idx` (`Usuario_idUsuario`)
-) ENGINE=InnoDB AUTO_INCREMENT=331 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=395 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -58,7 +58,7 @@ CREATE TABLE `compras` (
   `Ativo` varchar(2) NOT NULL,
   `public` int(1) NOT NULL,
   PRIMARY KEY (`IdCompra`)
-) ENGINE=InnoDB AUTO_INCREMENT=385 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=398 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -95,7 +95,7 @@ CREATE TABLE `produto` (
   `Marca` varchar(100) NOT NULL,
   `statusProduto` varchar(15) NOT NULL,
   PRIMARY KEY (`idProduto`)
-) ENGINE=InnoDB AUTO_INCREMENT=56 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=57 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -141,7 +141,7 @@ CREATE TABLE `vendas` (
   `Diferenca_Quantidade` decimal(10,2) DEFAULT NULL,
   `Venda_Total` decimal(10,2) DEFAULT NULL,
   PRIMARY KEY (`idVendas`)
-) ENGINE=InnoDB AUTO_INCREMENT=496 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=567 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
@@ -187,6 +187,33 @@ DELIMITER ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
 /*!50003 SET character_set_results = @saved_cs_results */ ;
 /*!50003 SET collation_connection  = @saved_col_connection */ ;
+
+--
+-- Table structure for table `vendatesta`
+--
+
+DROP TABLE IF EXISTS `vendatesta`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `vendatesta` (
+  `idVendas` int(11) NOT NULL AUTO_INCREMENT,
+  `Itensquant` int(11) NOT NULL,
+  `Compra_id` decimal(10,2) NOT NULL,
+  `valor` decimal(10,2) NOT NULL,
+  `Id_Compra` int(5) NOT NULL,
+  `cliente_idCliente` int(11) NOT NULL,
+  `compra_idData` date NOT NULL DEFAULT current_timestamp(),
+  `DataVenda` date NOT NULL,
+  `CodRastreioV` varchar(20) NOT NULL,
+  `TxMl` decimal(10,2) DEFAULT NULL,
+  `TxFret` decimal(10,2) DEFAULT NULL,
+  `Vd_Tax` decimal(10,2) DEFAULT NULL,
+  `Diferenca_Venda_Compra` decimal(10,2) DEFAULT NULL,
+  `Diferenca_Quantidade` decimal(10,2) DEFAULT NULL,
+  `Venda_Total` decimal(10,2) DEFAULT NULL,
+  PRIMARY KEY (`idVendas`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
@@ -197,4 +224,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-02-02 17:00:02
+-- Dump completed on 2025-06-16 17:00:04

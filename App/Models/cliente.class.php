@@ -29,7 +29,7 @@ class Cliente extends Connect
      		
    	}//fim -- index
 
-    function insertCliente($NomeCliente, $Cidade, $UF, $FoneCliente, $cpfCliente, $idUsuario, $perm)
+    function insertCliente($NomeCliente, $cpfCliente, $CepCliente, $idUsuario, $perm)
     {       
       if($perm == 1){ 
         $cpfCliente = connect::limpaCPF_CNPJ($cpfCliente);
@@ -40,13 +40,11 @@ class Cliente extends Connect
         }else{
         
         $NomeCliente  = mysqli_real_escape_string($this->SQL, $NomeCliente);
-        $Cidade       = mysqli_real_escape_string($this->SQL, $Cidade);
-        $UF           = mysqli_real_escape_string($this->SQL, $UF);
-        $FoneCliente = mysqli_real_escape_string($this->SQL, $FoneCliente);
         $cpfCliente   = mysqli_real_escape_string($this->SQL, $cpfCliente);
+        $CepCliente   = mysqli_real_escape_string($this->SQL, $CepCliente);
 
-        $query = "INSERT INTO `cliente`(`idCliente`, `NomeCliente`, `Cidade`, `UF`, `FoneCliente`, `cpfCliente`, `statusCliente`, `Usuario_idUsuario`) 
-        VALUES (NULL,'$NomeCliente','$Cidade','$UF','$FoneCliente','$cpfCliente',1,'$idUsuario')";
+        $query = "INSERT INTO `cliente`(`idCliente`, `NomeCliente`, `CepCliente`, `cpfCliente`, `statusCliente`, `Usuario_idUsuario`) 
+        VALUES (NULL,'$NomeCliente','$CepCliente','$cpfCliente',1,'$idUsuario')";
         $result = mysqli_query($this->SQL, $query) or die ( mysqli_error($this->SQL));
 
         if($result){
@@ -59,7 +57,7 @@ class Cliente extends Connect
         }
     }//Insert Cliente
 
-    function updateCliente($idCliente, $NomeCliente, $FoneCliente, $cpfCliente, $idUsuario, $perm)
+    function updateCliente($idCliente, $NomeCliente, $cpfCliente, $CepCliente, $idUsuario, $perm)
     {   
       
       if($perm == 1){
@@ -67,12 +65,11 @@ class Cliente extends Connect
         $cpfCliente = connect::limpaCPF_CNPJ($cpfCliente);
 
         $NomeCliente = mysqli_real_escape_string($this->SQL, $NomeCliente);
-        $FoneCliente = mysqli_real_escape_string($this->SQL, $FoneCliente);
         $cpfCliente = mysqli_real_escape_string($this->SQL, $cpfCliente);
+        $CepCliente = mysqli_real_escape_string($this->SQL, $CepCliente);
 
-        $query = "UPDATE `cliente` SET `NomeCliente`='$NomeCliente',`FoneCliente`=
-        '$FoneCliente',`cpfCliente`='$cpfCliente', `Usuario_idUsuario`= '$idUsuario' WHERE
-         `idCliente`= '$idCliente'";
+        $query = "UPDATE `cliente` SET `NomeCliente`='$NomeCliente', `CepCliente`='$CepCliente', `cpfCliente`='$cpfCliente', `Usuario_idUsuario`= '$idUsuario' WHERE `idCliente`= '$idCliente'";
+        
           $result = mysqli_query($this->SQL, $query) or die ( mysqli_error($this->SQL));
 
         if($result){

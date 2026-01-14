@@ -28,19 +28,19 @@ class Produto extends Connect
 
   // Inicio Insert Cliente
 
-  function insertProduto($skuProduto, $model, $NomeProduto, $Quantidade, $Conexao, $Marca, $idUsuario,)
+  function insertProduto($skuProduto, $modelo, $NomeProduto, $Conexao, $Marca, $idUsuario)
   {
     $skuProduto   = mysqli_real_escape_string($this->SQL, $skuProduto);
-    $model        = mysqli_real_escape_string($this->SQL, $model);
+    $modelo        = mysqli_real_escape_string($this->SQL, $modelo);
     $NomeProduto  = mysqli_real_escape_string($this->SQL, $NomeProduto);
-    $Quantidade   = mysqli_real_escape_string($this->SQL, $Quantidade);
+    
     $Conexao      = mysqli_real_escape_string($this->SQL, $Conexao);
     $Marca        = mysqli_real_escape_string($this->SQL, $Marca);
     $idUsuario    = mysqli_real_escape_string($this->SQL, $idUsuario);
 
 
-    $query = "INSERT INTO `produto`(`idProduto`, `skuProduto`, `model`,`NomeProduto`, `Quantidade`, `Conexao`, `Marca`, `statusProduto`) 
-    VALUES (NULL,'$skuProduto','$model','$NomeProduto','$Quantidade','$Conexao','$Marca','$idUsuario')";
+    $query = "INSERT INTO `produto`(`skuProduto`, `modelo`,`NomeProduto`, `Conexao`, `Marca`, `statusProduto`) 
+    VALUES ('$skuProduto','$modelo','$NomeProduto','$Conexao','$Marca','$idUsuario')";
     $result = mysqli_query($this->SQL, $query) or die(mysqli_error($this->SQL));
 
     if ($result) {
@@ -51,6 +51,13 @@ class Produto extends Connect
     mysqli_close($this->SQL);
   }
   // Fim Insert Produto 
+
+  // Inserir Imagem do Produto
+  function insertImagem($idProduto, $caminhoImagem) {
+    $query = "INSERT INTO `produto_imagem` (`idProduto`, `caminhoImagem`, `ordem`, `dataCadastro`) VALUES ('$idProduto', '$caminhoImagem', 0, NOW())";
+    return mysqli_query($this->SQL, $query);
+  }
+
   public function EditProduto($idProduto)
   {
 
@@ -69,7 +76,7 @@ class Produto extends Connect
         // Declare a variável $array fora do bloco condicional
         $array = array('produto' => [
           'SKU'             => $skuProduto,
-          'Modelo'          => $model,
+          'Modelo'          => $modelo,
           'Nome do Produto' => $NomeProduto,
           'Quantidade'        => $Quantidade,
           'Conexao'           => $Conexao,
@@ -83,17 +90,17 @@ class Produto extends Connect
   }
 
   //Inicio update Produto
-  function updateProduto($idProduto, $skuProduto, $model, $NomeProduto, $Quantidade, $Conexao, $Marca, $perm)
+  function updateProduto($idProduto, $skuProduto, $modelo, $NomeProduto, $Quantidade, $Conexao, $Marca, $perm)
   {
     if ($perm == 1) {
       $skuProduto  = mysqli_real_escape_string($this->SQL, $skuProduto);
-      $model       = mysqli_real_escape_string($this->SQL, $model);
+      $modelo       = mysqli_real_escape_string($this->SQL, $modelo);
       $NomeProduto = mysqli_real_escape_string($this->SQL, $NomeProduto);
       $Quantidade  = mysqli_real_escape_string($this->SQL, $Quantidade);
       $Conexao     = mysqli_real_escape_string($this->SQL, $Conexao);
       $Marca       = mysqli_real_escape_string($this->SQL, $Marca);
 
-      $query = "UPDATE `produto` SET `skuProduto`='$skuProduto',`model`='$model',`NomeProduto`='$NomeProduto',`Quantidade`=
+      $query = "UPDATE `produto` SET `skuProduto`='$skuProduto',`modelo`='$modelo',`NomeProduto`='$NomeProduto',`Quantidade`=
       '$Quantidade',`Conexao`='$Conexao', `Marca`= '$Marca' WHERE`idProduto`= '$idProduto'";
       $result = mysqli_query($this->SQL, $query) or die(mysqli_error($this->SQL));
 
@@ -112,7 +119,7 @@ class Produto extends Connect
     if (isset($value)) {
       //$output = '';  
       $query = "SELECT * FROM `produto` WHERE `skuProduto` LIKE '" .
-        $value . "%' OR `model` LIKE '" .
+        $value . "%' OR `modelo` LIKE '" .
         $value . "%' OR `NomeProduto` LIKE '" .
         $value . "%' LIMIT 5";
       $result = mysqli_query($this->SQL, $query);

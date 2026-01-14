@@ -49,7 +49,7 @@ if ($perm != 1) {
             unset(
               $_SESSION['msg'],
               $_SESSION['SKU'],
-              $_SESSION['model'],
+              $_SESSION['modelo'],
               $_SESSION['Produto']
             );
           }
@@ -67,8 +67,8 @@ if ($perm != 1) {
               foreach ($resps['data'] as $resp) {
 
                 $_SESSION['SKU']     = $resp['skuProduto'];
-                $_SESSION['model']   = $resp['model'];
-                $_SESSION['Produto'] = $resp['NomeProduto'];
+                $_SESSION['modelo']   = $resp['modelo'];
+                $_SESSION['Produto'] = $resp['nomeProduto'];
               }
             }
             unset($_POST['SKU']);
@@ -97,13 +97,13 @@ if ($perm != 1) {
 
 
           <!-- form start -->
-          <form role="form" action="../../App/Database/insertCompras.php" method="POST">
+          <form role="form" action="../../App/Database/insertCompras.php" method="POST" enctype="multipart/form-data">
             <div class="box-body">
 
               <div class="form-group row"> <!--Primeiro Div-->
                 <div class="col-sm-2">
                   <label for="exampleInputEmail1">SKU</label>
-                  <input type="text" name="skuProduto" class="form-control" id="exampleInputEmail1" placeholder="sku"
+                  <input type="text" name="skuAnuncio" class="form-control" id="exampleInputEmail1" placeholder="sku"
                     value="<?php if (isset($_SESSION['SKU'])) {
                               echo $_SESSION['SKU'];
                             } ?>" />
@@ -111,9 +111,9 @@ if ($perm != 1) {
 
                 <div class="col-sm-2">
                   <label for="exampleInputEmail1">Modelo</label>
-                  <input type="text" name="model" class="form-control" id="exampleInputEmail1" placeholder="Modelo"
-                    value="<?php if (isset($_SESSION['model'])) {
-                              echo $_SESSION['model'];
+                  <input type="text" name="modelo" class="form-control" id="exampleInputEmail1" placeholder="Modelo"
+                    value="<?php if (isset($_SESSION['modelo'])) {
+                              echo $_SESSION['modelo'];
                             } ?>" />
                 </div>
 
@@ -175,6 +175,13 @@ if ($perm != 1) {
                 </div>
               </div>
 
+              <div class="form-group row">
+                <div class="col-sm-12">
+                  <label>Imagens do Produto</label>
+                  <input type="file" name="imagens[]" class="form-control" multiple accept="image/*">
+                  <p class="help-block">Selecione uma ou mais imagens.</p>
+                </div>
+              </div>
 
               <input type="hidden" name="iduser" value="'.$idUsuario.'">
 
@@ -202,4 +209,59 @@ if ($perm != 1) {
     echo '</div>';
     echo  $footer;
     echo $javascript;
-    ?>
+?>
+<style>
+  /* Estilo para a lista de sugestões flutuar sobre o conteúdo */
+  #Listdata {
+    position: absolute;
+    z-index: 999;
+    background-color: #fff;
+    border: 1px solid #d2d6de;
+    left: 15px; /* Alinha com o padding da coluna Bootstrap */
+    right: 15px;
+    max-height: 250px;
+    overflow-y: auto;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  }
+  .ulcpf {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .licpf {
+    padding: 10px;
+    cursor: pointer;
+    border-bottom: 1px solid #f4f4f4;
+  }
+  .licpf:hover {
+    background-color: #e7e7e7;
+  }
+</style>
+<script>
+$(document).ready(function(){
+  // Ao digitar no campo SKU/Nome
+  $('#skuProduto').keyup(function(){
+    var query = $(this).val();
+    if(query != '') {
+      $.ajax({
+        url:"../../App/Database/search.php",
+        method:"POST",
+        data:{query:query},
+        success:function(data){
+          $('#Listdata').fadeIn();
+          $('#Listdata').html(data);
+        }
+      });
+    } else {
+      $('#Listdata').fadeOut();
+    }
+  });
+  
+  // Ao clicar em um item da lista
+  $(document).on('click', '#Listdata li', function(){
+    $('#skuProduto').val($(this).text()); // Preenche o campo
+    $('#Listdata').fadeOut(); // Esconde a lista
+    $('#form').submit(); // Submete o formulário para carregar os dados via PHP
+  });
+});
+</script>

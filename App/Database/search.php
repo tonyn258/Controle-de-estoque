@@ -20,11 +20,11 @@ if (isset($_POST["query"]) != null) {
 			echo  '<li id="li[' . $user['idProduto'] . ']" class="licpf">' .
 				$user['skuProduto'] .
 				' - ' .
-				$user['model'] .
+				$user['modelo'] .
 				' - ' .
-				$user['NomeProduto'] .
+				$user['nomeProduto'] .
 				' - ' .
-				$user['Marca'] .
+				$user['marca'] .
 				'</li>';
 		}
 		echo '</ul>';

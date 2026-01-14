@@ -3,30 +3,62 @@
 // Incluindo o arquivo de autenticação e o arquivo que contém a classe Compras
 require_once '../auth.php';
 require_once '../Models/compras.class.php';
+require_once '../Models/produto.class.php'; // Necessário para buscar ID do produto e salvar imagem
 // Verificando se a solicitação POST contém o parâmetro 'upload' e seu valor é 'Cadastrar'
 if (isset($_POST['upload']) && $_POST['upload'] == 'Cadastrar') {
     // Recuperando os valores enviados pelo formulário via POST
-    $skuProduto   = $_POST['skuProduto'];
-    $model        = $_POST['model'];
+    $skuAnuncio   = $_POST['skuAnuncio'];
+    $modelo        = $_POST['modelo'];
     $NomeProduto  = $_POST['NomeProduto'];
-    $CodRastreio  = $_POST['CodRastreio'];
     $ValorCompra  = $_POST['ValorCompra'];
     $DataCompra   = $_POST['DataCompra'];
-    $DataEntrega  = $_POST['DataEntrega'];
     $QuantItens   = $_POST['QuantItens'];    
     
     // Criando um novo objeto da classe Compras
     $compras = new Compras;
     // Verificando se todas as informações necessárias foram preenchidas pelo usuário
-    if ($skuProduto != null && $model != null && $NomeProduto != null && $CodRastreio != null && $ValorCompra != null && $DataCompra != null && $QuantItens != null)
+    if ($skuAnuncio != null && $modelo != null && $NomeProduto != null && $ValorCompra != null && $DataCompra != null && $QuantItens != null)
      {
         // Verificando se o parâmetro 'IdCompra' foi definido. Se não, é uma nova compra e o método insertCompras é chamado.
         if (!isset($_POST['IdCompra'])) {
-            $compras->insertCompras($skuProduto, $model, $NomeProduto, $CodRastreio, $ValorCompra, $DataCompra, $QuantItens);
+            $compras->insertCompras($skuAnuncio, $modelo, $NomeProduto, $ValorCompra, $DataCompra, $QuantItens);
         } else { // Se o parâmetro 'IdCompra' foi definido, é uma atualização e o método UpdateCompras é chamado.
             $IdCompra = $_POST['IdCompra'];
-            $compras->UpdateCompras($IdCompra, $skuProduto, $model, $NomeProduto, $CodRastreio, $ValorCompra, $DataCompra, $DataEntrega,$QuantItens);
+            $compras->UpdateCompras($IdCompra, $skuAnuncio, $modelo, $NomeProduto, $ValorCompra, $DataCompra, $QuantItens);
         }
+
+        // --- Lógica de Upload de Imagens ---
+        if (isset($_FILES['imagens']) && !empty($_FILES['imagens']['name'][0])) {
+            $produtoModel = new Produto();
+            // Busca o idProduto baseado no SKU (skuAnuncio)
+            $buscaProduto = $produtoModel->searchdata($skuAnuncio);
+            
+            $idProduto = null;
+            if ($buscaProduto && isset($buscaProduto['data'][0]['idProduto'])) {
+                $idProduto = $buscaProduto['data'][0]['idProduto'];
+            }
+
+            if ($idProduto) {
+                $totalImagens = count($_FILES['imagens']['name']);
+                for ($i = 0; $i < $totalImagens; $i++) {
+                    if ($_FILES['imagens']['error'][$i] == 0) {
+                        $extensao = pathinfo($_FILES['imagens']['name'][$i], PATHINFO_EXTENSION);
+                        $novoNome = md5(uniqid(rand(), true)) . '.' . $extensao;
+                        $diretorio = '../../views/dist/img/produtos/';
+                        
+                        if (!is_dir($diretorio)) {
+                            mkdir($diretorio, 0777, true);
+                        }
+
+                        if (move_uploaded_file($_FILES['imagens']['tmp_name'][$i], $diretorio . $novoNome)) {
+                            $caminhoImagem = 'dist/img/produtos/' . $novoNome;
+                            $produtoModel->insertImagem($idProduto, $caminhoImagem);
+                        }
+                    }
+                }
+            }
+        }
+
         // Configurando a mensagem de alerta e redirecionando para a página de compras
         $_SESSION['msg'] = 'Produto cadastrado';
         header('Location: ../../views/compras/index.php');//header('Location: ../../views/compras/addcompra.php');

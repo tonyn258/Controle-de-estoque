@@ -3,102 +3,82 @@ require_once '../../App/auth.php';
 require_once '../../layout/script.php';
 require_once '../../App/Models/produto.class.php';
 
+// Lógica de Processamento
+$produto = new Produto;
+$resp = $produto->index();
+$rows = json_decode($resp, true);
+
 echo $head;
 echo $header;
 echo $aside;
-echo '<div class="content-wrapper">
-<!-- Content Header (Page header) -->
-<section class="content-header">
-  <h1>
-  Usuário
-  </h1>
-  <ol class="breadcrumb">
-    <li><a href="../"><i class="fa fa-dashboard"></i> Home</a></li>
-    <li class="active">Produtos</li>
-  </ol>
-</section>
-<!-- Main content -->
-<section class="content">
-  ';
-require '../../layout/alert.php';
-echo '
-  <!-- Small boxes (Stat box) -->
-  <div class="row">
-   <div class="box box-primary">
-    <div class="box-header">
-      <i class="ion ion-clipboard"></i>
+?>
 
-      <h3 class="box-title">Lista de Produtos</h3>
+<div class="content-wrapper">
+  <!-- Cabeçalho da Página -->
+  <section class="content-header">
+    <h1>Produtos <small>Gerenciamento</small></h1>
+    <ol class="breadcrumb">
+      <li><a href="../"><i class="fa fa-dashboard"></i> Home</a></li>
+      <li class="active">Produtos</li>
+    </ol>
+  </section>
 
-      <div class="box-tools pull-right">
-        <ul class="pagination pagination-sm inline">
-          <li><a href="#">&laquo;</a></li>
-          <li><a href="#">1</a></li>
-          <li><a href="#">2</a></li>
-          <li><a href="#">3</a></li>
-          <li><a href="#">&raquo;</a></li>
-        </ul>
-      </div>      
-    </div>
-    <!-- /.box-header -->
-    <div class="box-body">    
-      
-    <!-- Inicio da Tabela -->
-    <table  id="example1" class="table table-bordered table-striped dataTable" role="grid" 
-    aria-describedby="example1_info" >
-    
-      <thead>
-          <tr>
-            <th>#              </th>
-            <th>SKU            </th>
-            <th>Modelo         </th>
-            <th>Nome do Protudo</th>
-            <th>Quant.         </th>
-            <th>Tipo de Conexão</th>
-            <th>Marca          </th>  
-            <th>Status Produto</th>  
-            <th>Edit</th>      
-          </tr>
-      </thead>
-        <tbody>    
-    ';
+  <!-- Conteúdo Principal -->
+  <section class="content">
+    <?php require '../../layout/alert.php'; ?>
 
-    
+    <div class="box box-primary">
+      <div class="box-header with-border">
+        <h3 class="box-title">Lista de Produtos</h3>
+        <div class="box-tools pull-right">
+          <a href="addproduto.php" class="btn btn-success btn-sm">
+            <i class="fa fa-plus"></i> Novo Produto
+          </a>
+        </div>
+      </div>
 
-$produto = new Produto;
-$resp =  $produto->index();
-$resps = json_decode($resp, true);
-foreach ($resps as $row) {
-  if (isset($row['idProduto']) != NULL) {
-    echo '<tr>';
-    echo '<td>' . $row['idProduto']     . '</td>';
-    echo '<td>' . $row['skuProduto']    . '</td>';
-    echo '<td>' . $row['model']         . '</td>';
-    echo '<td>' . $row['NomeProduto']   . '</td>';
-    echo '<td>' . $row['Quantidade']    . '</td>';
-    echo '<td>' . $row['Conexao']       . '</td>';
-    echo '<td>' . $row['Marca']         . '</td>';
-    echo '<td>' . $row['statusProduto'] . '</td>';
-    echo '<td> <a href="editproduto.php?id='.$row['idProduto'].'"<i class="fa fa-edit"></i></a></td>';
-    echo '</tr>';
-  }
-}
-echo '
-
-        </tbody>
+      <div class="box-body">
+        <table id="example1" class="table table-bordered table-striped table-hover">
+          <thead>
+            <tr>
+              <th style="width: 50px">#</th>
+              <th>SKU</th>
+              <th>Modelo</th>
+              <th>Nome do Produto</th>
+              <th>Conexão</th>
+              <th>Marca</th>
+              <th>Status</th>
+              <th style="width: 60px" class="text-center">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php
+            if (is_array($rows)) {
+              foreach ($rows as $row) {
+                if (isset($row['idProduto'])) {
+                  echo '<tr>';
+                  echo '<td>' . $row['idProduto'] . '</td>';
+                  echo '<td>' . ($row['skuProduto'] ?? '') . '</td>';
+                  echo '<td>' . ($row['modelo'] ?? '') . '</td>';
+                  echo '<td>' . ($row['nomeProduto'] ?? '') . '</td>';
+                  echo '<td>' . ($row['Conexao'] ?? '') . '</td>';
+                  echo '<td>' . ($row['marca'] ?? '') . '</td>';
+                  echo '<td>' . ($row['statusProduto'] ?? '') . '</td>';
+                  echo '<td class="text-center">
+                          <a href="addproduto.php?id=' . $row['idProduto'] . '" class="btn btn-primary btn-xs" title="Editar"><i class="fa fa-edit"></i></a>
+                        </td>';
+                  echo '</tr>';
+                }
+              }
+            }
+            ?>
+          </tbody>
         </table>
-        <!-- Fim da tabela -->
-        <br/>
-        <!-- /.box-body -->
-        <div class="left">
-         <form action="index.php" method="post">
-           <a href="addproduto.php" type="button" class="btn btn-success pull-right"><i
-            class="fa fa-plus"></i> Add Produto</a>
-         </div>
-       </div>
-       ';
-echo '</div>';
-echo '</section>';
-echo '</div>';
-echo  $footer;
+      </div>
+    </div>
+  </section>
+</div>
+<?php
+echo $footer;
 echo $javascript;
+?>

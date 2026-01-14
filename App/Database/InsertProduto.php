@@ -2,23 +2,23 @@
 require_once '../auth.php';
 require_once '../Models/produto.class.php';
 
-if (isset($_POST['upload']) == 'Cadastrar') {
+if (isset($_POST['upload']) && $_POST['upload'] == 'Cadastrar') {
     $skuProduto   = $_POST['skuProduto'];
-    $model        = $_POST['model'];
+    $modelo       = $_POST['modelo'];
     $NomeProduto  = $_POST['NomeProduto'];
-    $Quantidade   = $_POST['Quantidade'];
     $Conexao      = $_POST['Conexao'];
     $Marca        = $_POST['Marca'];
 
     $produto = new Produto;
 
-    if ($skuProduto != NULL && $model != NULL && $NomeProduto != NULL && $Quantidade != NULL && $Conexao != NULL && $Marca != NULL) 
+    if ($skuProduto != NULL && $modelo != NULL && $NomeProduto != NULL && $Conexao != NULL && $Marca != NULL) 
     {
         if (!isset($_POST['idProduto'])) {
-            $result = $produto->insertProduto($skuProduto,$model, $NomeProduto, $Quantidade, $Conexao, $Marca, $idUsuario, $perm);
+            $result = $produto->insertProduto($skuProduto, $modelo, $NomeProduto, $Conexao, $Marca, $idUsuario);
         } else {
                 $idProduto = $_POST['idProduto'];
-                $result = $produto->UpdateProduto($idProduto,$skuProduto, $model,$NomeProduto, $Quantidade, $Conexao, $Marca, $idUsuario, $perm);
+                $Quantidade = $_POST['Quantidade'];
+                $result = $produto->UpdateProduto($idProduto, $skuProduto, $modelo, $NomeProduto, $Quantidade, $Conexao, $Marca, $perm);
                 }
         $_SESSION['alert'] = $result;
         header('Location: ../../views/produto/index.php');
