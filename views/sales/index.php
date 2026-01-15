@@ -124,16 +124,26 @@ echo $aside;
         color: #00a65a;
         text-align: right;
     }
+    /* Alinha o título e os botões na mesma linha */
+    .content-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    /* Botões de navegação personalizados (estilo semelhante a clientes) */
+    .nav-menu { margin: 0; }
+    .nav-menu a { display: inline-block; padding: 10px 20px; margin: 0 5px; background: #007bff; color: white; text-decoration: none; border-radius: 4px; font-size: 14px; }
+    .nav-menu a:hover { background: #0056b3; }
 </style>
 
 <div class="content-wrapper">
     <!-- Cabeçalho da Página -->
     <section class="content-header">
-        <h1>Nova Venda <small>Lançamento de Pedido</small></h1>
-        <ol class="breadcrumb">
-            <li><a href="../"><i class="fa fa-dashboard"></i> Home</a></li>
-            <li class="active">Vendas</li>
-        </ol>
+        <h1>🛒 Lançamento de Pedido</h1>
+        <div class="nav-menu">
+            <a href="../">🏠 Home</a>
+            <a href="index.php">🛒 Vendas</a>
+        </div>
     </section>
 
     <!-- Conteúdo Principal -->

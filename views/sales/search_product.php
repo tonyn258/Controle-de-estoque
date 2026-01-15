@@ -10,7 +10,7 @@ if (isset($_GET['term'])) {
 
     // Busca por Nome ou SKU, apenas itens com estoque positivo
     $query = "SELECT IdCompra, skuAnuncio, NomeProduto, QuantItens, QuantItensVend, ValorVenda 
-              FROM `compras` 
+              FROM `anuncio` 
               WHERE (skuAnuncio LIKE '%$term%' OR NomeProduto LIKE '%$term%') 
               AND (QuantItens - COALESCE(QuantItensVend, 0) > 0)
               LIMIT 10";
@@ -20,6 +20,7 @@ if (isset($_GET['term'])) {
 
     while ($row = mysqli_fetch_assoc($result)) {
         $estoqueAtual = $row['QuantItens'] - ($row['QuantItensVend'] ?? 0);
+        $valorVenda = isset($row['ValorVenda']) ? $row['ValorVenda'] : 0;
         
         $json[] = [
             'id' => $row['IdCompra'], // ID interno para o sistema
@@ -27,7 +28,7 @@ if (isset($_GET['term'])) {
             'label' => $row['skuAnuncio'] . ' - ' . $row['NomeProduto'], // Exibição na lista
             'nome' => $row['NomeProduto'],
             'estoque' => $estoqueAtual,
-            'preco' => $row['ValorVenda'] // Preço sugerido
+            'preco' => number_format($valorVenda, 2, ',', '') // Preço sugerido formatado (ex: 10,50)
         ];
     }
 

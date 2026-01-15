@@ -10,16 +10,11 @@ echo $aside;
 echo '<div class="content-wrapper">
     <section class="content-header">
         <h1>Clientes e suas Vendas</h1>
-        <div class="nav-menu">
-            <a href="../">🏠 Home</a>
-            <a href="index.php">🛒 Vendas</a>
-        </div>
+        <ol class="breadcrumb">
+            <li><a href="../"><i class="fa fa-dashboard"></i> Home</a></li>
+            <li class="active">Clientes</li>
+        </ol>
     </section>
-    <style>
-        .nav-menu { position: absolute; top: 10px; right: 15px; }
-        .nav-menu a { display: inline-block; padding: 10px 20px; margin: 0 5px; background: #007bff; color: white; text-decoration: none; border-radius: 4px; font-size: 14px; }
-        .nav-menu a:hover { background: #0056b3; }
-    </style>
     <section class="content">';
 
 require '../../layout/alert.php'; // Inclui alertas para mensagens ao usuário
