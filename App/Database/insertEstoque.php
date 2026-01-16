@@ -14,6 +14,7 @@ if (isset($_POST['upload']) && $_POST['upload'] == 'Cadastrar') {
     $DataCompra   = $_POST['DataCompra'];
     $DataEntrega  = $_POST['DataEntrega'];
     $QuantItens   = $_POST['QuantItens'];
+    $usuario_id   = $_SESSION['idUsuario'];
     
     
     
@@ -22,9 +23,10 @@ if (isset($_POST['upload']) && $_POST['upload'] == 'Cadastrar') {
     // Verificando se todas as informações necessárias foram preenchidas pelo usuário
     if ($skuProduto != null && $model != null && $NomeProduto != null && $CodRastreio != null && $ValorCompra != null && $DataCompra != null && $QuantItens != null)
      {
+        $result = $compras->insertCompras($skuProduto, $model, $NomeProduto, $ValorCompra, $DataCompra, $QuantItens, $usuario_id);
         // Configurando a mensagem de alerta com base no resultado da operação
-        if ($result) {
-            $_SESSION['alert'] = '0'; // Operação não efetuada, erro
+        if (!$result) {
+            $_SESSION['alert'] = '0'; // Operação não efetuada, erro (0 usually means error in this context logic)
         } else {
             $_SESSION['alert'] = '1'; // Operação realizada com sucesso
            

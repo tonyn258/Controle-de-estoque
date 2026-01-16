@@ -120,7 +120,7 @@ echo $aside;
                                     <div class="col-md-2">
                                         <div class="form-group">
                                             <label>SKU</label>
-                                            <input type="text" name="skuAnuncio" class="form-control" placeholder="SKU" value="<?= $sku ?>">
+                                            <input type="text" name="skuAnuncio" class="form-control" placeholder="SKU" value="<?= htmlspecialchars($sku) ?>">
                                         </div>
                                     </div>
                                     <div class="col-md-2">
@@ -138,12 +138,6 @@ echo $aside;
                                 </div>
 
                                 <div class="row">
-                                    <div class="col-md-3">
-                                        <div class="form-group">
-                                            <label>Cod. de Rastreio</label>
-                                            <input type="text" name="CodRastreio" class="form-control" placeholder="Cod. de Rastreio" value="<?= $rastreio ?>">
-                                        </div>
-                                    </div>
                                     <div class="col-md-3">
                                         <div class="form-group">
                                             <label>Valor da Compra</label>

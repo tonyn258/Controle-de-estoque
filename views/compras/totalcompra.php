@@ -55,11 +55,9 @@ echo '
     <tr>
         <th>#</t>
         <th>SKU/Modelo</t>        
-        <th>Cod.Rastreio</t> 
         <th>Nome Produto</t>               
         <th>Valor Compra</t>          
         <th>Compra</t>  
-        <th>Entrega</t>
         <th>Dias Corridos</t>
         <th>Edit</t> 
               
@@ -79,38 +77,25 @@ if (isset($_POST['sort_by']) && isset($_POST['sort_order'])) {
   $order_by = "";
 }
 // Chama o método index da classe Compras, passando as permissões do usuário e o critério de ordenação
-$resp =  $compras->index($perm, $order_by);
+$idUsuario = $_SESSION['idUsuario'];
+$resp =  $compras->index($idUsuario, $order_by);
 // Decodifica a resposta JSON obtida do método index da classe Compras
 $resps = json_decode($resp, true);
 // Percorre o array $resps e imprime as linhas da tabela
 foreach ($resps as $row) {
   echo '<tr>';
   echo '<td>' . $row['IdCompra'] . '</td>';
-  echo '<td>' . $row['skuProduto'] . ' / ' . $row['model'] . '</td>';
-  echo '<td>' . $row['CodRastreio'] . '</td>';
+  echo '<td>' . $row['skuAnuncio'] . ' / ' . $row['model'] . '</td>';
   echo '<td>' . $row['NomeProduto'] . '</td>';
   echo '<td>R$ ' . number_format($row['ValorCompra'], 2, ',', '.') . '</td>';
   echo '<td>' . date('d-m-Y', strtotime($row['DataCompra'])) . '</td>';
 
-  // Verifica se DataEntrega é NULL e adiciona a classe CSS amarela, caso contrário, adiciona a classe CSS verde
-  if (isset($row['DataEntrega']) && !empty($row['DataEntrega']) && $row['DataEntrega'] !== '0000-00-00') {
-    echo '<td>' . date('d-m-Y', strtotime($row['DataEntrega'])) . ' <span class="dot green-dot"></span></td>';
-  } else {
-    $dataEntrega = date('d-m-Y');
-    echo '<td>' . $dataEntrega . ' <span class="dot Orange-dot"></span></td>';
-    //echo '<td>Aguardando <span class="dot Orange-dot"></span></td>';  
-
-  }
   $dataCompra = new DateTime($row['DataCompra']); // inicializa a variável $dataCompra
 
   // Calcula o Tempo de Entrega em dias
-  if (isset($row['DataEntrega']) && !empty($row['DataEntrega']) && $row['DataEntrega'] !== '0000-00-00') {
-    $dataEntrega = new DateTime($row['DataEntrega']);
-    $tempoEntrega = $dataEntrega->diff($dataCompra)->days; // calcula a diferença em dias
-  } else {
-    $dataAtual = new DateTime();
-    $tempoEntrega = $dataAtual->diff($dataCompra)->days;
-  }
+  $dataAtual = new DateTime();
+  $tempoEntrega = $dataAtual->diff($dataCompra)->days;
+  
   echo '<td>' . $tempoEntrega . '- Dias</td>';
   echo '<td> <a href="editcompra.php?id=' . $row['IdCompra'] . '"<i class="fa fa-edit"></i></a></td>';
   echo '</tr>';
@@ -138,7 +123,7 @@ if(isset($_POST['public']) != NULL){
   $button_name = "Inativos";
 }
 echo' <ul class="todo-list">';
-               $compras->totalcompra($value);
+//               $compras->totalcompra($value); // Método não existe na classe Compras
 echo '</ul>
                         </tbody>
                     </table>

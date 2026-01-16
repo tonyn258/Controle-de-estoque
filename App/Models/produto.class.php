@@ -21,7 +21,7 @@ class Produto extends Connect
     if (count($row) > 0) {
       return json_encode($row);
     } else {
-      return json_encode(array("message" => "Nenhum resultado encontrado."));
+      return json_encode([]);
     }
   }
   //fim -- index

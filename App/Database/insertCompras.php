@@ -13,6 +13,7 @@ if (isset($_POST['upload']) && $_POST['upload'] == 'Cadastrar') {
     $ValorCompra  = $_POST['ValorCompra'];
     $DataCompra   = $_POST['DataCompra'];
     $QuantItens   = $_POST['QuantItens'];    
+    $usuario_id   = $_SESSION['idUsuario'];
     
     // Criando um novo objeto da classe Compras
     $compras = new Compras;
@@ -21,10 +22,10 @@ if (isset($_POST['upload']) && $_POST['upload'] == 'Cadastrar') {
      {
         // Verificando se o parâmetro 'IdCompra' foi definido. Se não, é uma nova compra e o método insertCompras é chamado.
         if (!isset($_POST['IdCompra'])) {
-            $compras->insertCompras($skuAnuncio, $modelo, $NomeProduto, $ValorCompra, $DataCompra, $QuantItens);
+            $compras->insertCompras($skuAnuncio, $modelo, $NomeProduto, $ValorCompra, $DataCompra, $QuantItens, $usuario_id);
         } else { // Se o parâmetro 'IdCompra' foi definido, é uma atualização e o método UpdateCompras é chamado.
             $IdCompra = $_POST['IdCompra'];
-            $compras->UpdateCompras($IdCompra, $skuAnuncio, $modelo, $NomeProduto, $ValorCompra, $DataCompra, $QuantItens);
+            $compras->UpdateCompras($IdCompra, $skuAnuncio, $modelo, $NomeProduto, $ValorCompra, $DataCompra, $QuantItens, $usuario_id);
         }
 
         // --- Lógica de Upload de Imagens ---

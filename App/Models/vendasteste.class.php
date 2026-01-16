@@ -20,13 +20,13 @@ class VendasTeste extends Connect
         if (count($row) > 0) {
             return json_encode($row);
         } else {
-            return json_encode(array("message" => "Nenhum resultado encontrado."));
+            return json_encode([]);
         }
     }
 
     public function itensVerify($Id_Compra, $quant)
     {
-        $this->query = "SELECT * FROM `compras` WHERE `IdCompra` = '$Id_Compra'";
+        $this->query = "SELECT * FROM `anuncio` WHERE `IdCompra` = '$Id_Compra'";
         $this->result = mysqli_query($this->SQL, $this->query) or die(mysqli_error($this->SQL));
 
         if (mysqli_num_rows($this->result) > 0) {
@@ -50,7 +50,7 @@ class VendasTeste extends Connect
 
     public function itensVendido($Id_Compra, $quant, $NomeCliente, $cpfCliente, $FoneCliente, $Cidade, $UF, $idUsuario, $DataVenda, $CodRastreioV, $TxMl, $TxFret, $Vd_Tax)
     {
-        $this->query = "SELECT * FROM `compras` WHERE `IdCompra` = '$Id_Compra'";
+        $this->query = "SELECT * FROM `anuncio` WHERE `IdCompra` = '$Id_Compra'";
         $this->result = mysqli_query($this->SQL, $this->query) or die(mysqli_error($this->SQL));
 
         if ($row = mysqli_fetch_array($this->result)) {
@@ -79,7 +79,7 @@ class VendasTeste extends Connect
                     VALUES ('$quant','$Compra_id','$valor','$Id_Compra','$idCliente','$compra_idData','$DataVenda','$CodRastreioV','$TxMl','$TxFret','$Vd_Tax')";
 
                 if (mysqli_query($this->SQL, $this->query) or die(mysqli_error($this->SQL))) {
-                    $this->query = "UPDATE `compras` SET `QuantItensVend` = '$quantotal' WHERE `IdCompra`= '$Id_Compra'";
+                    $this->query = "UPDATE `anuncio` SET `QuantItensVend` = '$quantotal' WHERE `IdCompra`= '$Id_Compra'";
                     if (mysqli_query($this->SQL, $this->query) or die(mysqli_error($this->SQL))) {
                         $_SESSION['msg'] = 'Venda efetuada';
                         header('Location: ../../views/vendas/');
@@ -113,7 +113,7 @@ class VendasTeste extends Connect
 
     public function itemNome($IdCompra)
     {
-        $query = "SELECT `NomeProduto` FROM `compras` WHERE `IdCompra` = '$IdCompra'";
+        $query = "SELECT `NomeProduto` FROM `anuncio` WHERE `IdCompra` = '$IdCompra'";
         $result = mysqli_query($this->SQL, $query) or die(mysqli_error($this->SQL));
 
         if (mysqli_num_rows($result) > 0) {

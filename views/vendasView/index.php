@@ -34,7 +34,8 @@ echo '
 
 // Instancia um novo objeto da classe Vendas
 $vendas = new Vendas;
-$resp = $vendas->indexView("ORDER BY v.idVendas DESC"); // Ordena pelo idVendas de forma decrescente
+$idUsuario = $_SESSION['idUsuario'];
+$resp = $vendas->indexView($idUsuario, "ORDER BY v.idVendas DESC"); // Ordena pelo idVendas de forma decrescente
 $resps = json_decode($resp, true);
 
 // Agrupa as vendas pelo código de rastreio, somando as taxas e acumulando os produtos

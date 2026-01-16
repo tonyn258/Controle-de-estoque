@@ -27,8 +27,14 @@ if (isset($_POST['sort_by']) && isset($_POST['sort_order'])) {
 
 // Instancia e busca dados
 $compras = new Compras;
-$resp = $compras->index($perm, $order_by);
+$idUsuario = $_SESSION['idUsuario'];
+$resp = $compras->index($idUsuario, $order_by);
 $rows = json_decode($resp, true);
+
+// Garante que $rows seja um array para evitar erros no foreach
+if (!is_array($rows)) {
+    $rows = [];
+}
 
 echo $head;
 echo $header;
@@ -77,9 +83,9 @@ echo $aside;
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php if (!empty($rows)): ?>
+                                <?php if (count($rows) > 0): ?>
                                     <?php foreach ($rows as $row): 
-                                        $estoque = $row['QuantItens'] - $row['QuantItensVend'];
+                                        $estoque = $row['QuantItens'] - ($row['QuantItensVend'] ?? 0);
                                         
                                         // Filtro de Estoque
                                         if ($filtro_estoque == 1 && $estoque <= 0) {
@@ -100,6 +106,8 @@ echo $aside;
                                             </td>
                                         </tr>
                                     <?php endforeach; ?>
+                                <?php else: ?>
+                                    <tr><td colspan="7" class="text-center">Nenhum registro encontrado. Verifique se os produtos pertencem ao seu usuário.</td></tr>
                                 <?php endif; ?>
                             </tbody>
                         </table>

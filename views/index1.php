@@ -15,6 +15,7 @@ echo '<div class="content-wrapper">
 $conexao = new connect();
 $vendas = new Vendas($conexao);
 $compras = new Compras($conexao);
+$idUsuario = $_SESSION['idUsuario'];
 
 // Obtém o ano atual
 $currentYear = date('Y');
@@ -40,11 +41,11 @@ $selectedYear = isset($_POST['year']) ? $_POST['year'] : $currentYear;
 
 // Query para buscar as informações de vendas do banco de dados para o ano selecionado ou todos os anos
 if ($selectedYear === 'all') {
-  $sql_vendas = "SELECT Compra_id, Vd_Tax, DataVenda FROM vendas";
-  $sql_compras = "SELECT NULL AS Vd_Tax, NULL AS DataVenda, DataCompra, ValorCompra FROM compras";
+  $sql_vendas = "SELECT v.anuncio_id, v.Vd_Tax, v.DataVenda, a.ValorCompra FROM vendas v LEFT JOIN anuncio a ON v.anuncio_id = a.IdCompra WHERE (v.usuario_id = '$idUsuario' OR v.usuario_id IS NULL OR v.usuario_id = 0)";
+  $sql_compras = "SELECT NULL AS Vd_Tax, NULL AS DataVenda, DataCompra, ValorCompra FROM anuncio WHERE (usuario_id = '$idUsuario' OR usuario_id IS NULL OR usuario_id = 0)";
 } else {
-  $sql_vendas = "SELECT Compra_id, Vd_Tax, DataVenda FROM vendas WHERE YEAR(DataVenda) = $selectedYear";
-  $sql_compras = "SELECT NULL AS Vd_Tax, NULL AS DataVenda, DataCompra, ValorCompra FROM compras WHERE YEAR(DataCompra) = $selectedYear";
+  $sql_vendas = "SELECT v.anuncio_id, v.Vd_Tax, v.DataVenda, a.ValorCompra FROM vendas v LEFT JOIN anuncio a ON v.anuncio_id = a.IdCompra WHERE YEAR(v.DataVenda) = $selectedYear AND (v.usuario_id = '$idUsuario' OR v.usuario_id IS NULL OR v.usuario_id = 0)";
+  $sql_compras = "SELECT NULL AS Vd_Tax, NULL AS DataVenda, DataCompra, ValorCompra FROM anuncio WHERE YEAR(DataCompra) = $selectedYear AND (usuario_id = '$idUsuario' OR usuario_id IS NULL OR usuario_id = 0)";
 }
 
 
@@ -71,7 +72,7 @@ $result = mysqli_query($conexao->SQL, $sql_vendas);
 $totalLucros = 0;
 while ($row = mysqli_fetch_assoc($result)) {
   $valorVendas = (float)$row["Vd_Tax"];
-   $valorCompra = (float)$row["Compra_id"];
+   $valorCompra = (float)$row["ValorCompra"];
     $valorLucro = $valorVendas - $valorCompra;
 $totalLucros += $valorLucro;
 }
@@ -162,8 +163,8 @@ while ($row = mysqli_fetch_assoc($result_compras)) {
 while ($row = mysqli_fetch_assoc($result_vendas)) {
     $mes = (int)date("n", strtotime($row["DataVenda"]));    
     $valorVendas = (float)$row["Vd_Tax"];
-    //$valorLucro = $valorVendas - (float)$row["Compra_id"];
-    $valorLucro = $valorVendas - (float)$row["Compra_id"] ;   
+    $valorCompra = (float)$row["ValorCompra"];
+    $valorLucro = $valorVendas - $valorCompra;   
      
     $dataArrayVendas[$mes][3] += $valorVendas; // Soma o valor de vendas por mês
     $dataArrayVendas[$mes][2] += $valorLucro; // Soma o valor do lucro por mês    

@@ -4,19 +4,21 @@ require_once 'connect.php';
 class Vendas extends Connect
 {
   // Função que busca e retorna todas as vendas do banco de dados
-  function indexView($order_by = "")
+  function indexView($usuario_id, $order_by = "")
   {
     if (!$this->SQL) {
       die("Conexão com o banco de dados falhou: " . mysqli_connect_error());
     }
+    $usuario_id = mysqli_real_escape_string($this->SQL, $usuario_id);
 
     // Query que retorna todas as vendas, juntando as tabelas vendas, compras e cliente
     $query = "SELECT v.idVendas, v.valor, v.DataVenda, v.CodRastreioV, 
-                     c.skuProduto, c.model, c.NomeProduto, 
+                     c.skuAnuncio AS skuProduto, c.model, c.NomeProduto, 
                      cl.NomeCliente, cl.cpfCliente, cl.idCliente,v.Vd_Tax
               FROM vendas v
               LEFT JOIN anuncio c ON v.anuncio_id = c.IdCompra
               LEFT JOIN cliente cl ON v.cliente_idCliente = cl.idCliente
+              WHERE (v.usuario_id = '$usuario_id' OR v.usuario_id IS NULL OR v.usuario_id = 0)
               $order_by";
 
     $this->result = mysqli_query($this->SQL, $query) or die(mysqli_error($this->SQL));
@@ -28,12 +30,12 @@ class Vendas extends Connect
     if (count($row) > 0) {
       return json_encode($row);
     } else {
-      return json_encode(array("message" => "Nenhum resultado encontrado."));
+      return json_encode([]);
     }
   }
 
   // Função para inserir uma nova venda no banco de dados
-  function insertVenda($Itensquant, $valor, $anuncio_id, $cliente_idCliente, $DataVenda, $CodRastreioV,$Vd_Tax)
+  function insertVenda($Itensquant, $valor, $anuncio_id, $cliente_idCliente, $DataVenda, $CodRastreioV, $Vd_Tax, $usuario_id)
   {
     // Escapa caracteres especiais para evitar SQL injection
     $Itensquant        = mysqli_real_escape_string($this->SQL, $Itensquant);
@@ -43,10 +45,11 @@ class Vendas extends Connect
     $DataVenda         = mysqli_real_escape_string($this->SQL, $DataVenda);
     $CodRastreioV      = mysqli_real_escape_string($this->SQL, $CodRastreioV);
     $Vd_Tax      = mysqli_real_escape_string($this->SQL, $Vd_Tax);
+    $usuario_id        = mysqli_real_escape_string($this->SQL, $usuario_id);
 
     // Query de inserção
-    $query = "INSERT INTO `vendas`(`Itensquant`, `valor`, `anuncio_id`, `cliente_idCliente`, `DataVenda`, `CodRastreioV`,`Vd_Tax`) 
-              VALUES ('$Itensquant', '$valor', '$anuncio_id', '$cliente_idCliente', '$DataVenda', '$CodRastreioV', '$Vd_Tax')";
+    $query = "INSERT INTO `vendas`(`Itensquant`, `valor`, `anuncio_id`, `cliente_idCliente`, `DataVenda`, `CodRastreioV`,`Vd_Tax`, `usuario_id`) 
+              VALUES ('$Itensquant', '$valor', '$anuncio_id', '$cliente_idCliente', '$DataVenda', '$CodRastreioV', '$Vd_Tax', '$usuario_id')";
     
     $result = mysqli_query($this->SQL, $query) or die(mysqli_error($this->SQL));
     

@@ -5,13 +5,20 @@ require_once 'connect.php';
 class Compras extends Connect
 {
   // Função que busca e retorna todas as compras do banco de dados
-  function index($value)
+  function index($usuario_id, $order_by = "")
   {
     // Verifica se a conexão com o banco de dados está funcionando
     if (!$this->SQL) {
       die("Conexão com o banco de dados falhou: " . mysqli_connect_error());
     }
-    $this->query = "SELECT * FROM `anuncio` ORDER BY `IdCompra` DESC";
+    $usuario_id = mysqli_real_escape_string($this->SQL, $usuario_id);
+    $this->query = "SELECT * FROM `anuncio` WHERE (`usuario_id` = '$usuario_id' OR `usuario_id` IS NULL OR `usuario_id` = 0) ";
+
+    if (!empty($order_by)) {
+      $this->query .= $order_by;
+    } else {
+      $this->query .= "ORDER BY `IdCompra` DESC";
+    }
 
 
     $this->result = mysqli_query($this->SQL, $this->query) or die(mysqli_error($this->SQL));
@@ -24,12 +31,12 @@ class Compras extends Connect
     if (count($row) > 0) {
       return json_encode($row);
     } else {
-      return json_encode(array("message" => "Nenhum resultado encontrado."));
+      return json_encode([]); // Garante retorno de array vazio
     }
   } //fim -- index
 
   // Função que insere uma nova compra no banco de dados
-  function insertCompras($skuProduto, $model, $NomeProduto, $ValorCompra, $DataCompra, $QuantItens)
+  function insertCompras($skuProduto, $model, $NomeProduto, $ValorCompra, $DataCompra, $QuantItens, $usuario_id)
   {
     // Escapa caracteres especiais para evitar SQL injection
     $skuProduto   = mysqli_real_escape_string($this->SQL, $skuProduto);
@@ -38,9 +45,10 @@ class Compras extends Connect
     $ValorCompra  = mysqli_real_escape_string($this->SQL, $ValorCompra);
     $DataCompra   = mysqli_real_escape_string($this->SQL, $DataCompra);
     $QuantItens   = mysqli_real_escape_string($this->SQL, $QuantItens);
+    $usuario_id   = mysqli_real_escape_string($this->SQL, $usuario_id);
     // Monta a query de inserção
-    $query = "INSERT INTO `anuncio`(`skuAnuncio`, `model`,`NomeProduto`, `ValorCompra`, `DataCompra`,`QuantItens`) 
-              VALUES ('$skuProduto', '$model','$NomeProduto', '$ValorCompra', '$DataCompra','$QuantItens')";
+    $query = "INSERT INTO `anuncio`(`skuAnuncio`, `model`,`NomeProduto`, `ValorCompra`, `DataCompra`,`QuantItens`, `usuario_id`) 
+              VALUES ('$skuProduto', '$model','$NomeProduto', '$ValorCompra', '$DataCompra','$QuantItens', '$usuario_id')";
     $result = mysqli_query($this->SQL, $query) or die(mysqli_error($this->SQL));
     // Verifica se a inserção foi realizada com sucesso
     if ($result) {
@@ -59,10 +67,10 @@ class Compras extends Connect
 
       if ($row = mysqli_fetch_array($this->result)) {
         // Preenche um array com os dados da compra
-        $skuProduto  = $row['skuProduto'] ?? $row['skuAnuncio'] ?? '';
+        $skuProduto  = $row['skuAnuncio'];
         $model       = $row['model'] ?? '';
         $NomeProduto = $row['NomeProduto'] ?? '';
-        $CodRastreio = $row['CodRastreio'] ?? '';
+        $CodRastreio = ''; // Coluna removida
         $ValorCompra = $row['ValorCompra'] ?? '';
         $DataCompra  = $row['DataCompra'] ?? '';
         $QuantItens  = $row['QuantItens'] ?? '';
@@ -86,7 +94,7 @@ class Compras extends Connect
     return 0; // retorne um valor padrão para o caso em que a query não é executada
   }
 
-  public function UpdateCompras($IdCompra, $skuProduto, $model, $NomeProduto, $ValorCompra, $DataCompra, $QuantItens)
+  public function UpdateCompras($IdCompra, $skuProduto, $model, $NomeProduto, $ValorCompra, $DataCompra, $QuantItens, $usuario_id)
   {
     // Altera os valores do produto com base no seu IdCompra
     $this->query = "UPDATE `anuncio` SET 
@@ -95,10 +103,11 @@ class Compras extends Connect
                     `NomeProduto` = '$NomeProduto', 
                     `ValorCompra` = '$ValorCompra', 
                     `DataCompra`  = '$DataCompra', 
-                    `QuantItens`  = '$QuantItens'
+                    `QuantItens`  = '$QuantItens',
+                    `usuario_id`  = '$usuario_id'
 
                     
-              WHERE `IdCompra`    = '$IdCompra'";
+              WHERE `IdCompra`    = '$IdCompra' AND (`usuario_id` = '$usuario_id' OR `usuario_id` IS NULL OR `usuario_id` = 0)";
 
     if ($this->result = mysqli_query($this->SQL, $this->query) or die(mysqli_error($this->SQL))) {
 
