@@ -116,5 +116,60 @@ class Compras extends Connect
       header('Location: ../../views/compras/index.php?alert=0');
     }
   }
+
+  // Método para filtrar compras com base nos critérios avançados
+  public function filtrar($usuario_id, $busca, $status, $categoria, $data_inicio, $data_fim)
+  {
+    $usuario_id = mysqli_real_escape_string($this->SQL, $usuario_id);
+    // Filtra por usuário ou registros públicos/legados
+    $where = "WHERE (`usuario_id` = '$usuario_id' OR `usuario_id` IS NULL OR `usuario_id` = 0)";
+
+    if (!empty($busca)) {
+        $busca = mysqli_real_escape_string($this->SQL, $busca);
+        $where .= " AND (`skuAnuncio` LIKE '%$busca%' OR `NomeProduto` LIKE '%$busca%' OR `model` LIKE '%$busca%')";
+    }
+
+    if (!empty($categoria)) {
+        $categoria = mysqli_real_escape_string($this->SQL, $categoria);
+        $where .= " AND `idCategoria` = '$categoria'";
+    }
+
+    if (!empty($data_inicio)) {
+        $data_inicio = mysqli_real_escape_string($this->SQL, $data_inicio);
+        $where .= " AND `DataCompra` >= '$data_inicio'";
+    }
+
+    if (!empty($data_fim)) {
+        $data_fim = mysqli_real_escape_string($this->SQL, $data_fim);
+        $where .= " AND `DataCompra` <= '$data_fim'";
+    }
+
+    if ($status === 'com_estoque') {
+        $where .= " AND (`QuantItens` - COALESCE(`QuantItensVend`, 0)) > 0";
+    } elseif ($status === 'sem_estoque') {
+        $where .= " AND (`QuantItens` - COALESCE(`QuantItensVend`, 0)) <= 0";
+    }
+
+    $query = "SELECT * FROM `anuncio` $where ORDER BY `IdCompra` DESC";
+    $result = mysqli_query($this->SQL, $query);
+    $rows = [];
+    while ($row = mysqli_fetch_assoc($result)) {
+        $rows[] = $row;
+    }
+    return $rows;
+  }
+
+  // Método para buscar categorias para o select
+  public function getCategorias() {
+      $query = "SELECT * FROM `categoria_produto`";
+      $result = mysqli_query($this->SQL, $query);
+      $cats = [];
+      if ($result) {
+          while ($row = mysqli_fetch_assoc($result)) {
+              $cats[] = $row;
+          }
+      }
+      return $cats;
+  }
 } //fim -- classe Compras
 $compras = new Compras;

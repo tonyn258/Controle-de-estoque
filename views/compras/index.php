@@ -3,140 +3,222 @@ require_once '../../App/auth.php';
 require_once '../../layout/script.php';
 require_once '../../App/Models/compras.class.php';
 
-// Lógica de controle do botão Publicados/Inativos
-$value = 1;
-$public = 0;
-$button_name = "Inativos"; // Este botão parece não estar sendo usado na query principal, mantendo lógica original
-
-// Lógica de Filtro de Estoque
-$filtro_estoque = isset($_POST['filtro_estoque']) ? $_POST['filtro_estoque'] : 0;
-
-if (isset($_POST['public'])) {
-    $value = $_POST['public'];
-    $public = ($value == 1) ? 0 : 1;
-    $button_name = ($value == 1) ? "Inativos" : "Publicados";
-}
-
-// Lógica de ordenação
-$order_by = "";
-if (isset($_POST['sort_by']) && isset($_POST['sort_order'])) {
-    $sort_by = $_POST['sort_by'];
-    $sort_order = $_POST['sort_order'];
-    $order_by = "ORDER BY $sort_by $sort_order";
-}
-
-// Instancia e busca dados
 $compras = new Compras;
 $idUsuario = $_SESSION['idUsuario'];
-$resp = $compras->index($idUsuario, $order_by);
-$rows = json_decode($resp, true);
 
-// Garante que $rows seja um array para evitar erros no foreach
-if (!is_array($rows)) {
-    $rows = [];
+// --- Lógica AJAX para Filtros ---
+if (isset($_GET['action']) && $_GET['action'] == 'search') {
+    $busca = $_GET['busca'] ?? '';
+    $status = $_GET['status'] ?? '';
+    $categoria = $_GET['categoria'] ?? '';
+    $data_inicio = $_GET['data_inicio'] ?? '';
+    $data_fim = $_GET['data_fim'] ?? '';
+
+    $rows = $compras->filtrar($idUsuario, $busca, $status, $categoria, $data_inicio, $data_fim);
+    
+    // Retorna JSON para o JavaScript
+    header('Content-Type: application/json');
+    echo json_encode($rows);
+    exit;
 }
+
+// --- Renderização da Página ---
 
 echo $head;
 echo $header;
 echo $aside;
+
+// Busca categorias para o filtro
+$categorias = $compras->getCategorias();
 ?>
 
 <div class="content-wrapper">
     <!-- Content Header (Page header) -->
-    <section class="content-header">
-        <h1>Gestão de Compras e Estoque</h1>
-        <ol class="breadcrumb">
-            <li><a href="../"><i class="fa fa-dashboard"></i> Home</a></li>
-            <li class="active">Compras</li>
-        </ol>
+    <section class="content-header" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 15px 0 15px;">
+        <h1 style="margin: 0; font-size: 24px;">
+            Gestão de Compras e Estoque
+            <small>Controle de produtos</small>
+        </h1>
+        <div class="header-actions">
+            <a href="../" class="btn btn-default btn-flat"><i class="fa fa-home"></i> Home</a>
+            <a href="addcompra.php" class="btn btn-primary btn-flat"><i class="fa fa-plus"></i> Nova Compra</a>
+            <a href="../produto/" class="btn btn-success btn-flat"><i class="fa fa-box"></i> Cadastrar Produto</a>
+        </div>
     </section>
 
     <!-- Main content -->
     <section class="content">
         <?php require '../../layout/alert.php'; ?>
 
-        <div class="row">
-            <div class="col-xs-12">
-                <div class="box box-primary">
-                    <div class="box-header">
-                        <i class="ion ion-clipboard"></i>
-                        <h3 class="box-title">Lista de Produtos</h3>
-                        
-                        <form action="index.php" method="post" style="display:inline-block; margin-left: 20px;">
-                            <button name="filtro_estoque" type="submit" value="<?= ($filtro_estoque == 1) ? 0 : 1 ?>" class="btn btn-sm <?= ($filtro_estoque == 1) ? 'btn-warning' : 'btn-default' ?>">
-                                <i class="fa fa-filter"></i> <?= ($filtro_estoque == 1) ? 'Exibir Todos' : 'Apenas com Estoque' ?>
-                            </button>
-                        </form>
+        <div class="box box-primary" style="border-top-width: 3px;">
+            <div class="box-body">
+                
+                <!-- Barra de Filtros -->
+                <div class="row" style="margin-bottom: 20px; background: #f9f9f9; padding: 15px; border-radius: 5px; margin-left: 0; margin-right: 0;">
+                    <div class="col-md-12" style="margin-bottom: 15px;">
+                        <div class="input-group">
+                            <span class="input-group-addon"><i class="fa fa-search"></i></span>
+                            <input type="text" id="busca" class="form-control input-lg" placeholder="Buscar por SKU, nome do produto ou modelo...">
+                        </div>
                     </div>
-
-                    <div class="box-body">
-                        <table id="example1" class="table table-bordered table-striped table-hover">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>SKU/Modelo</th>
-                                    <th>Nome Produto</th>
-                                    <th>Valor Compra</th>
-                                    <th>Estoque</th>
-                                    <th>Compra</th>
-                                    <th>Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php if (count($rows) > 0): ?>
-                                    <?php foreach ($rows as $row): 
-                                        $estoque = $row['QuantItens'] - ($row['QuantItensVend'] ?? 0);
-                                        
-                                        // Filtro de Estoque
-                                        if ($filtro_estoque == 1 && $estoque <= 0) {
-                                            continue;
-                                        }
-                                    ?>
-                                        <tr>
-                                            <td><?= $row['IdCompra'] ?></td>
-                                            <td><?= $row['skuAnuncio'] . ' / ' . $row['model'] ?></td>
-                                            <td><?= $row['NomeProduto'] ?></td>
-                                            <td>R$ <?= number_format($row['ValorCompra'], 2, ',', '.') ?></td>
-                                            <td><?= $estoque ?></td>
-                                            <td><?= date('d/m/Y', strtotime($row['DataCompra'])) ?></td>
-                                            <td>
-                                                <a href="editcompra.php?id=<?= $row['IdCompra'] ?>" class="btn btn-sm btn-primary" title="Editar">
-                                                    <i class="fa fa-edit"></i>
-                                                </a>
-                                            </td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                <?php else: ?>
-                                    <tr><td colspan="7" class="text-center">Nenhum registro encontrado. Verifique se os produtos pertencem ao seu usuário.</td></tr>
-                                <?php endif; ?>
-                            </tbody>
-                        </table>
+                    <div class="col-md-3">
+                        <label>Status</label>
+                        <select id="status" class="form-control">
+                            <option value="">Todos</option>
+                            <option value="com_estoque">Com Estoque</option>
+                            <option value="sem_estoque">Sem Estoque</option>
+                        </select>
                     </div>
-                    <!-- /.box-body -->
-
-                    <div class="box-footer clearfix">
-                        <form action="index.php" method="post" class="pull-left">
-                            <button name="public" type="submit" value="<?= $public ?>" class="btn btn-default">
-                                <i class="fa fa-refresh"></i> <?= $button_name ?>
-                            </button>
-                        </form>
-                        <a href="addcompra.php" class="btn btn-success pull-right">
-                            <i class="fa fa-plus"></i> Adicionar Produto
-                        </a>
+                    <div class="col-md-3">
+                        <label>Categoria</label>
+                        <select id="categoria" class="form-control">
+                            <option value="">Todas</option>
+                            <?php foreach ($categorias as $cat): ?>
+                                <option value="<?= $cat['idCategoria'] ?? $cat['id'] ?>"><?= $cat['NomeCategoria'] ?? $cat['nome'] ?></option>
+                            <?php endforeach; ?>
+                        </select>
                     </div>
-                    <!-- /.box-footer -->
+                    <div class="col-md-2">
+                        <label>Data Inicial</label>
+                        <input type="date" id="data_inicio" class="form-control">
+                    </div>
+                    <div class="col-md-2">
+                        <label>Data Final</label>
+                        <input type="date" id="data_fim" class="form-control">
+                    </div>
+                    <div class="col-md-2">
+                        <label>&nbsp;</label>
+                        <button id="btnFiltrar" class="btn btn-primary btn-block btn-flat"><i class="fa fa-filter"></i> Filtrar</button>
+                        <button id="btnLimpar" class="btn btn-default btn-block btn-flat btn-xs" style="margin-top: 5px;">Limpar Filtros</button>
+                    </div>
                 </div>
-                <!-- /.box -->
+
+                <!-- Tabela de Dados -->
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover table-striped">
+                        <thead style="background-color: #3c8dbc; color: white;">
+                            <tr>
+                                <th style="width: 50px;">#</th>
+                                <th>SKU / Modelo</th>
+                                <th>Nome do Produto</th>
+                                <th>Categoria</th>
+                                <th>Valor Compra</th>
+                                <th>Estoque</th>
+                                <th>Data Compra</th>
+                                <th>Status</th>
+                                <th class="text-center" style="width: 100px;">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelaDados">
+                            <!-- Dados carregados via AJAX -->
+                        </tbody>
+                    </table>
+                </div>
+                
             </div>
-            <!-- /.col -->
         </div>
-        <!-- /.row -->
     </section>
-    <!-- /.content -->
 </div>
-<!-- /.content-wrapper -->
 
 <?php
 echo $footer;
 echo $javascript;
 ?>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Carrega dados iniciais
+    carregarDados();
+
+    // Eventos dos botões
+    document.getElementById('btnFiltrar').addEventListener('click', carregarDados);
+    
+    document.getElementById('btnLimpar').addEventListener('click', function() {
+        document.getElementById('busca').value = '';
+        document.getElementById('status').value = '';
+        document.getElementById('categoria').value = '';
+        document.getElementById('data_inicio').value = '';
+        document.getElementById('data_fim').value = '';
+        carregarDados();
+    });
+
+    // Busca ao pressionar Enter
+    document.getElementById('busca').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') carregarDados();
+    });
+});
+
+function carregarDados() {
+    const busca = document.getElementById('busca').value;
+    const status = document.getElementById('status').value;
+    const categoria = document.getElementById('categoria').value;
+    const data_inicio = document.getElementById('data_inicio').value;
+    const data_fim = document.getElementById('data_fim').value;
+
+    const params = new URLSearchParams({
+        action: 'search',
+        busca: busca,
+        status: status,
+        categoria: categoria,
+        data_inicio: data_inicio,
+        data_fim: data_fim
+    });
+
+    const tbody = document.getElementById('tabelaDados');
+    tbody.innerHTML = '<tr><td colspan="9" class="text-center" style="padding: 20px;"><i class="fa fa-spinner fa-spin fa-2x"></i><br>Carregando dados...</td></tr>';
+
+    fetch('index.php?' + params.toString())
+        .then(response => response.json())
+        .then(data => {
+            tbody.innerHTML = '';
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center" style="padding: 20px;">Nenhum registro encontrado.</td></tr>';
+                return;
+            }
+
+            data.forEach(row => {
+                const estoque = (parseInt(row.QuantItens) || 0) - (parseInt(row.QuantItensVend) || 0);
+                
+                let statusLabel = '';
+                if (estoque > 0) {
+                    statusLabel = '<span class="label label-success">Em estoque</span>';
+                } else {
+                    statusLabel = '<span class="label label-danger">Sem estoque</span>';
+                }
+                
+                // Formatação de Data
+                let dateStr = '-';
+                if(row.DataCompra) {
+                    const dateObj = new Date(row.DataCompra);
+                    dateStr = dateObj.toLocaleDateString('pt-BR');
+                }
+
+                // Formatação de Moeda
+                const valor = parseFloat(row.ValorCompra).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${row.IdCompra}</td>
+                    <td><strong>${row.skuAnuncio || ''}</strong> <br> <small class="text-muted">${row.model || ''}</small></td>
+                    <td>${row.NomeProduto}</td>
+                    <td>${row.idCategoria || '-'}</td>
+                    <td>${valor}</td>
+                    <td><strong>${estoque}</strong></td>
+                    <td>${dateStr}</td>
+                    <td>${statusLabel}</td>
+                    <td class="text-center">
+                        <div class="btn-group">
+                            <a href="editcompra.php?id=${row.IdCompra}" class="btn btn-default btn-sm" title="Editar"><i class="fa fa-edit"></i></a>
+                            <button type="button" class="btn btn-default btn-sm" title="Visualizar"><i class="fa fa-eye"></i></button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center text-danger">Erro ao carregar dados. Verifique o console.</td></tr>';
+        });
+}
+</script>
