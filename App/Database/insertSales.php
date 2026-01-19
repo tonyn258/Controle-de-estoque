@@ -22,6 +22,12 @@ if (isset($_POST['idItem']) &&
   // Recebe o array de preços do carrinho, se existir
   $Vd_Tax_Array = isset($_POST['Vd_Tax_Array']) ? $_POST['Vd_Tax_Array'] : [];
 
+  // Função auxiliar para converter moeda BR (1.000,00) para Float (1000.00)
+  function parseCurrency($val) {
+      if (is_numeric($val)) return $val;
+      return (float)str_replace(',', '.', str_replace('.', '', $val));
+  }
+
   $vendas = new Vendas;
   
   // O loop agora acontece aqui ou dentro da classe?
@@ -33,7 +39,8 @@ if (isset($_POST['idItem']) &&
         $quant = $_POST['qtd'][$key];
         
         // Pega o preço específico deste item, ou 0 se não definido
-        $precoItem = isset($Vd_Tax_Array[$key]) ? $Vd_Tax_Array[$key] : 0;
+        $rawPrice = isset($Vd_Tax_Array[$key]) ? $Vd_Tax_Array[$key] : 0;
+        $precoItem = parseCurrency($rawPrice);
 
         $vendas->itensVendidos($id, $quant, $NomeCliente, $cpfCliente, $CepCliente, $idUsuario, $DataVenda, $CodRastreioV, $precoItem);
     }

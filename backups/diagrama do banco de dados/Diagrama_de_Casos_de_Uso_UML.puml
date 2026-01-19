@@ -1,0 +1,41 @@
+@startuml Diagrama_Casos_Uso
+
+left to right direction
+skinparam actorStyle awesome
+
+actor Usuario
+actor Administrador
+actor Cliente
+
+rectangle "Sistema de Controle de Estoque e Vendas" {
+
+Usuario -- (Autenticar no sistema)
+
+Usuario -- (Cadastrar produto)
+Usuario -- (Editar produto)
+Usuario -- (Consultar estoque)
+
+Usuario -- (Cadastrar anúncio)
+Usuario -- (Gerenciar anúncios)
+Usuario -- (Adicionar imagens ao anúncio)
+
+Usuario -- (Cadastrar cliente)
+Usuario -- (Editar cliente)
+Usuario -- (Consultar clientes)
+
+Usuario -- (Registrar venda)
+Usuario -- (Consultar vendas)
+
+Administrador -- (Gerenciar usuários)
+Administrador -- (Definir permissões)
+Administrador -- (Gerenciar categorias de produtos)
+
+Cliente -- (Realizar compra)
+Cliente -- (Consultar pedido)
+}
+
+(Registrar venda) ..> (Consultar estoque) : <<include>>
+(Cadastrar anúncio) ..> (Gerenciar categorias de produtos) : <<include>>
+(Gerenciar anúncios) ..> (Adicionar imagens ao anúncio) : <<extend>>
+
+@enduml

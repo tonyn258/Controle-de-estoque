@@ -1,0 +1,229 @@
+
+@startuml
+title Tela de Usuários
+
+skinparam monochrome true
+skinparam packageStyle rectangle
+
+package "views/usuarios" {
+  [index.php]
+  [add.php]
+  [edit.php]
+  [delete.php]
+}
+
+package "App" {
+  [auth.php]
+  package "Models" {
+    [UsuarioModel.php]
+  }
+}
+
+package "uploads" {
+  package "usuarios" {
+    [arquivos]
+  }
+}
+
+[index.php] --> [auth.php] : require
+[index.php] --> [UsuarioModel.php] : require
+
+[index.php] --> [add.php] : link
+[index.php] --> [edit.php] : link
+[index.php] --> [delete.php] : form
+
+[index.php] --> [arquivos] : img src
+
+@enduml
+
+
+================================================================================
+                          MAPA DO SISTEMA - CONTROLE DE ESTOQUE
+================================================================================
+
+1. MÓDULO DE AUTENTICAÇÃO (LOGIN)
+--------------------------------------------------------------------------------
+login.php (Interface de Acesso)
+ │
+ ├── [Importa] ──> assets/css/style.css (Estilização)
+ ├── [Importa] ──> assets/js/scriptcanva.js (Animação de Fundo)
+ │
+ ├── [Envia POST] ──> App/session.php (Processador de Login)
+ │                      │
+ │                      ├── [Usa] ──> App/Models/connect.php (Conexão DB)
+ │                      └── [Redireciona]
+ │                           ├── Sucesso ──> views/index.php (Dashboard)
+ │                           └── Erro ─────> login.php?alert=X
+ │
+ └── [Recebe GET] <── (Parâmetro ?alert=1 ou 2 para exibir erros)
+
+views/destroy.php (Logout)
+ │
+ ├── [Ação] ──> Destrói a sessão
+ └── [Redireciona] ──> index.php (Raiz/Login)
+
+
+2. DASHBOARD PRINCIPAL
+--------------------------------------------------------------------------------
+views/index.php (Menu Principal)
+ │
+ ├── [Inclui] ──> App/auth.php (Verificação de Sessão)
+ ├── [Importa] ──> FontAwesome (Ícones)
+ │
+ └── [Navegação]
+      ├── [Link] ──> views/sales/ (Nova Venda)
+      ├── [Link] ──> views/relatorios/index.php (Relatórios)
+      ├── [Link] ──> views/cliente/ (Clientes)
+      ├── [Link] ──> views/produto/ (Produtos)
+      ├── [Link] ──> views/catalogo/ (Catálogo)
+      └── [Link] ──> views/usuarios/ (Usuários - Apenas Admin)
+
+
+3. MÓDULO DE VENDAS (PDV)
+--------------------------------------------------------------------------------
+views/sales/index.php (Interface de Venda)
+ │
+ ├── [Inclui] ──> App/auth.php
+ ├── [Inclui] ──> App/Models/connect.php
+ │
+ ├── [Inclui Lógica] ──> App/Database/carrinho.php (Gerenciador de Sessão)
+ │                         │
+ │                         ├── [Usa] ──> App/Models/compras.class.php (Busca Preços)
+ │                         └── [Usa] ──> App/Models/vendas.class.php (Busca Nomes)
+ │
+ ├── [Envia POST] ──> index.php (Adicionar Item - Self)
+ │
+ ├── [Envia POST] ──> App/Database/insertSales.php (Finalizar Venda)
+ │                      │
+ │                      ├── [Usa] ──> App/Models/sales.class.php (Registra Venda/Baixa Estoque)
+ │                      └── [Redireciona] ──> views/sales/index.php
+ │
+ ├── [Link GET] ──> App/Database/remover.php (Remover Item/Limpar)
+ │                    └── [Redireciona] ──> views/sales/index.php
+ │
+ └── [AJAX] ──> search_product.php / search_client.php (Autocomplete)
+
+
+4. MÓDULO DE RELATÓRIOS
+--------------------------------------------------------------------------------
+views/relatorios/index.php (Menu de Relatórios)
+ │
+ ├── [Link] ──> views/relatorios/view_vendas.php
+ └── [Link] ──> views/relatorios/dashboard.php
+
+views/relatorios/dashboard.php (Gráficos e KPIs)
+ │
+ ├── [Inclui] ──> App/auth.php
+ ├── [Usa] ──> App/Models/vendas.class.php (Dados de Vendas)
+ ├── [Usa] ──> App/Models/compras.class.php (Dados de Compras)
+ │
+ ├── [Importa] ──> Chart.js (Gráficos de Barras/Linhas)
+ ├── [Importa] ──> Google Charts (Mapa Geográfico)
+ │
+ └── [Envia POST] ──> dashboard.php (Filtros de Ano/Mês - Self)
+
+views/relatorios/view_vendas.php (Listagem de Vendas)
+ │
+ ├── [Inclui] ──> App/auth.php
+ ├── [Usa] ──> Classe VendasModel (Interna - Consulta SQL)
+ │
+ ├── [Envia GET] ──> view_vendas.php (Filtros Mês/Ano - Self)
+ └── [Link] ──> views/relatorios/excluir_vendas.php
+
+views/relatorios/excluir_vendas.php (Gerenciamento de Exclusão)
+ │
+ ├── [Inclui] ──> App/auth.php
+ ├── [Usa] ──> Classe VendasExclusaoModel (Interna)
+ │
+ └── [Envia POST] ──> excluir_vendas.php (Excluir Registro - Self)
+
+
+5. MÓDULO DE CLIENTES
+--------------------------------------------------------------------------------
+views/cliente/index.php (Listagem)
+ │
+ ├── [Inclui] ──> App/auth.php
+ ├── [Usa] ──> App/Models/cliente.class.php (Busca Clientes)
+ └── [Link] ──> views/cliente/addcliente.php
+
+views/cliente/addcliente.php (Cadastro)
+ │
+ ├── [Inclui] ──> App/auth.php
+ └── [Envia POST] ──> App/Database/insertcliente.php (Processador)
+                        │
+                        └── [Redireciona] ──> views/cliente/index.php
+
+
+6. MÓDULO DE USUÁRIOS (ADMIN)
+--------------------------------------------------------------------------------
+views/usuarios/index.php (Listagem)
+ │
+ ├── [Inclui] ──> App/auth.php
+ ├── [Usa] ──> App/Models/UsuarioModel.php (Busca Usuários)
+ │
+ ├── [Link] ──> views/usuarios/add.php
+ ├── [Link] ──> views/usuarios/edit.php
+ └── [Envia POST] ──> views/usuarios/delete.php (Exclusão)
+
+views/usuarios/add.php (Cadastro)
+ │
+ ├── [Inclui] ──> App/auth.php
+ ├── [Usa] ──> App/Models/UsuarioModel.php (Insert)
+ └── [Envia POST] ──> add.php (Self - Processamento e Upload)
+
+views/usuarios/edit.php (Edição)
+ │
+ ├── [Inclui] ──> App/auth.php
+ ├── [Usa] ──> App/Models/UsuarioModel.php (Update)
+ └── [Envia POST] ──> edit.php (Self - Processamento e Upload)
+
+
+7. MÓDULO DE COMPRAS / PRODUTOS
+--------------------------------------------------------------------------------
+views/compras/index.php (Listagem de Estoque)
+ │
+ ├── [Inclui] ──> App/auth.php
+ ├── [Usa] ──> App/Models/compras.class.php (Busca Produtos)
+ │
+ ├── [AJAX GET] ──> index.php (Filtros de Busca - Self)
+ ├── [Link] ──> views/compras/addcompra.php
+ └── [Link] ──> views/compras/editcompra.php
+
+views/compras/addcompra.php (Cadastro)
+ │
+ ├── [Inclui] ──> App/auth.php
+ ├── [Usa] ──> App/Models/produto.class.php (Busca SKU)
+ └── [Envia POST] ──> App/Database/insertCompras.php (Processador)
+                        │
+                        ├── [Usa] ──> App/Models/compras.class.php
+                        └── [Redireciona] ──> views/compras/index.php
+
+views/catalogo/add.php (Cadastro Simplificado)
+ │
+ ├── [Inclui] ──> App/auth.php
+ └── [Envia POST] ──> add.php (Self - Insert PDO direto)
+
+
+8. ESTRUTURA DE DIRETÓRIOS E RECURSOS
+--------------------------------------------------------------------------------
+App/
+ ├── auth.php (Controle de Sessão)
+ ├── session.php (Login)
+ ├── Models/
+ │    ├── connect.php (Conexão MySQLi)
+ │    ├── UsuarioModel.php (PDO - Usuários)
+ │    ├── vendas.class.php (Lógica de Venda)
+ │    ├── sales.class.php (Inserção de Venda)
+ │    ├── compras.class.php (Produtos/Estoque)
+ │    └── cliente.class.php (Clientes)
+ └── Database/
+      ├── carrinho.php (Lógica do Carrinho)
+      ├── insertSales.php (Processa Venda)
+      ├── insertCompras.php (Processa Produto)
+      └── remover.php (Limpeza de Sessão)
+
+assets/
+ ├── css/
+ │    └── style.css (Login)
+ └── js/
+      └── scriptcanva.js (Animação Login)

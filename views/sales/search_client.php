@@ -16,7 +16,7 @@ if (isset($_GET['term'])) {
         foreach ($results['data2'] as $row) {
             $json[] = [
                 'id' => $row['idCliente'],
-                'value' => $row['NomeCliente'], // O que aparece na lista
+                'value' => $row['NomeCliente'] . ' - ' . $row['cpfCliente'], // O que aparece no input ao selecionar
                 'label' => $row['NomeCliente'] . ' - ' . $row['cpfCliente'], // O que aparece na sugestão
                 'cpf' => $row['cpfCliente'],
                 'nome' => $row['NomeCliente'],

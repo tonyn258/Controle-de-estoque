@@ -1,19 +1,28 @@
 <?php
 require_once '../auth.php';
 
-	$idProduto = $_GET['id'];
+if(isset($_GET['limpar']) && $_GET['limpar'] == "tudo"){
+    unset($_SESSION['itens']);
+    unset($_SESSION['vendas']);
+    unset($_SESSION['taxas']);
+    unset($_SESSION['fretes']);
+    if (isset($_GET['target']) && $_GET['target'] == 'inicio') {
+        header("Location: ../../views/");
+    } else {
+        header("Location: ../../views/sales/");
+    }
+    exit();
+}
 
-if(isset($_GET['remover']) && $_GET['remover'] == "carrinho"){
+if(isset($_GET['remover']) && $_GET['remover'] == "carrinho" && isset($_GET['id'])){
 
 	$idProduto = $_GET['id'];    
 
-	unset($_SESSION['itens'][$idProduto]);
-
-    $NomeProdutoEncoded = urlencode($NomeProduto); // Codifica o nome do produto para ser incluído na URL
-
-// Redireciona de volta para o arquivo index.php, passando o nome do produto como parâmetro
-header("Location: ../../views/vendas/?removedItem=$NomeProdutoEncoded");
-exit();   
-
-	echo "<meta http-equiv='refresh' content='0;URL=../../views/vendas/'>";
+    if(isset($_SESSION['itens'][$idProduto])){
+	    unset($_SESSION['itens'][$idProduto]);
+        unset($_SESSION['vendas'][$idProduto]);
+    }
+    
+    header("Location: ../../views/sales/");
+    exit();   
 }

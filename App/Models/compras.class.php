@@ -17,7 +17,7 @@ class Compras extends Connect
     if (!empty($order_by)) {
       $this->query .= $order_by;
     } else {
-      $this->query .= "ORDER BY `IdCompra` DESC";
+      $this->query .= "ORDER BY `idAnuncio` DESC";
     }
 
 
@@ -62,7 +62,7 @@ class Compras extends Connect
   public function EditCompras($IdCompra)
   {
     // Executa a query e verifica se houve resultados
-    $this->query = "SELECT * FROM `anuncio` WHERE `IdCompra` = '$IdCompra'";
+    $this->query = "SELECT * FROM `anuncio` WHERE `idAnuncio` = '$IdCompra'";
     if ($this->result = mysqli_query($this->SQL, $this->query) or die(mysqli_error($this->SQL))) {
 
       if ($row = mysqli_fetch_array($this->result)) {
@@ -72,6 +72,7 @@ class Compras extends Connect
         $NomeProduto = $row['NomeProduto'] ?? '';
         $CodRastreio = ''; // Coluna removida
         $ValorCompra = $row['ValorCompra'] ?? '';
+        $ValorVenda  = $row['ValorVenda'] ?? '';
         $DataCompra  = $row['DataCompra'] ?? '';
         $QuantItens  = $row['QuantItens'] ?? '';
 
@@ -83,6 +84,7 @@ class Compras extends Connect
           'Nome'            => $NomeProduto,
           'Rastreio'        => $CodRastreio,
           'Valor'           => $ValorCompra,
+          'ValorVenda'      => $ValorVenda,
           'Data'            => $DataCompra,
           'Saldo'           => $QuantItens,
 
@@ -107,7 +109,7 @@ class Compras extends Connect
                     `usuario_id`  = '$usuario_id'
 
                     
-              WHERE `IdCompra`    = '$IdCompra' AND (`usuario_id` = '$usuario_id' OR `usuario_id` IS NULL OR `usuario_id` = 0)";
+              WHERE `idAnuncio`    = '$IdCompra' AND (`usuario_id` = '$usuario_id' OR `usuario_id` IS NULL OR `usuario_id` = 0)";
 
     if ($this->result = mysqli_query($this->SQL, $this->query) or die(mysqli_error($this->SQL))) {
 
@@ -150,7 +152,7 @@ class Compras extends Connect
         $where .= " AND (`QuantItens` - COALESCE(`QuantItensVend`, 0)) <= 0";
     }
 
-    $query = "SELECT * FROM `anuncio` $where ORDER BY `IdCompra` DESC";
+    $query = "SELECT * FROM `anuncio` $where ORDER BY `idAnuncio` DESC";
     $result = mysqli_query($this->SQL, $query);
     $rows = [];
     while ($row = mysqli_fetch_assoc($result)) {

@@ -1,6 +1,6 @@
 
 <?php
-require_once 'connect.php';
+require_once __DIR__ . '/connect.php';
 
 class Produto extends Connect
 {

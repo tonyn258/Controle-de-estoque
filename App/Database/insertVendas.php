@@ -30,12 +30,9 @@ if (
     $TxMl         = $_POST['TxMl'];
     $TxFret       = $_POST['TxFret'];
     $Vd_Tax       = $_POST['Vd_Tax'];
-    $Vd_Tax       = $_POST['Diferenca_Venda_Compra'];
-    $Vd_Tax       = $_POST['Diferenca_Quantidade'];
-    $Vd_Tax       = $_POST['Venda_Total'];
-    $connect = new Connect;
-
-    //$cart = $_SESSION['cart'];
+    $Diferenca_Venda_Compra = $_POST['Diferenca_Venda_Compra'];
+    $Diferenca_Quantidade   = $_POST['Diferenca_Quantidade'];
+    $Venda_Total            = $_POST['Venda_Total'];
 
     foreach ($_POST['idItem'] as $key => $error) {
 
@@ -64,6 +61,11 @@ if (
         $vendas = new Vendas;
         $vendas->itensVendido($id, $quant, $NomeCliente, $cpfCliente, $FoneCliente, $Cidade, $UF, $idUsuario, $DataVenda, $CodRastreioV, $TxMl, $TxFret, $Vd_Tax, $Diferenca_Venda_Compra, $Diferenca_Quantidade, $Venda_Total);
     }
+    unset($_SESSION['itens']);
+    unset($_SESSION['vendas']);
+    unset($_SESSION['taxas']);
+    unset($_SESSION['fretes']);
+    header('Location: ../../views/vendas/index.php');
 } else {
     $_SESSION['alert'] = 0;
     header('Location: ../../views/vendas/index.php');

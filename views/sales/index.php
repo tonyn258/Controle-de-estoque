@@ -1,356 +1,226 @@
 <?php
 require_once '../../App/auth.php';
-require_once '../../layout/script.php';
-require_once '../../App/Models/sales.class.php';
-require_once '../../App/Models/cliente.class.php';
-require_once '../../App/Models/connect.php'; // Garantir conexão para formatação
-
-// --- LÓGICA PHP ---
-
-// 1. Processamento da Busca de Cliente
-if (isset($_POST['CPF'])) {
-    $clienteModel = new Cliente();
-    $cpf = filter_input(INPUT_POST, 'CPF', FILTER_SANITIZE_STRING);
-    
-    // Tenta busca ampla (Nome ou CPF parcial)
-    $resps = $clienteModel->search($cpf);
-    $clienteEncontrado = null;
-
-    if (is_array($resps) && isset($resps['data2']) && count($resps['data2']) > 0) {
-        $clienteEncontrado = $resps['data2'][0];
-    } else {
-        // Tenta busca específica de CPF (limpa pontuação)
-        $resps = $clienteModel->searchdata($cpf);
-        if (is_array($resps) && isset($resps['data']) && count($resps['data']) > 0) {
-            $clienteEncontrado = $resps['data'][0];
+require_once '../../App/Models/connect.php';
+date_default_timezone_set('America/Sao_Paulo');
+?>
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova Venda (Carrinho)</title>
+    <style>
+        :root {
+            --primary: #007bff;
+            --secondary: #6c757d;
+            --success: #28a745;
+            --danger: #dc3545;
+            --light: #f8f9fa;
+            --dark: #343a40;
+            --radius: 8px;
+            --shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
-    }
-
-    if ($clienteEncontrado) {
-        $_SESSION['Cliente']  = $clienteEncontrado['NomeCliente'];
-        $_SESSION['cpf']      = $clienteEncontrado['cpfCliente'];
-        $_SESSION['Cep'] = $clienteEncontrado['CepCliente'];
-    } else {
-        $_SESSION['msg'] = "Cliente não encontrado.";
-        unset($_SESSION['Cliente'], $_SESSION['cpf'], $_SESSION['Cep']);
-    }
-    unset($_POST['CPF']);
-}
-
-if (isset($_GET['clear'])) {
-    unset($_SESSION['Cliente'], $_SESSION['cpf'], $_SESSION['Cep'], $_SESSION['msg']);
-    header('Location: index.php');
-    exit();
-}
-
-// 2. Tratamento de Mensagens de Sessão
-$msg = '';
-if (!empty($_SESSION['msg'])) {
-    $msg = $_SESSION['msg'];
-    unset($_SESSION['msg']);
-}
-
-// 3. Lógica do Carrinho de Compras
-if (!isset($_SESSION['carrinho'])) {
-    $_SESSION['carrinho'] = [];
-}
-
-// Adicionar Item
-if (isset($_POST['add_item'])) {
-    $id = $_POST['prod_id'];
-    $sku = $_POST['prod_sku'];
-    $nome = $_POST['prod_nome'];
-    $qtd = (int)$_POST['prod_qtd'];
-    $preco = (float)str_replace(',', '.', $_POST['prod_preco']);
-
-    // Verifica se já existe para somar quantidade (opcional, aqui cria nova linha)
-    $item = [
-        'id' => $id,
-        'sku' => $sku,
-        'nome' => $nome,
-        'qtd' => $qtd,
-        'preco' => $preco,
-        'subtotal' => $qtd * $preco
-    ];
-    
-    $_SESSION['carrinho'][] = $item;
-    
-    // Limpa POST para evitar reenvio
-    header("Location: index.php");
-    exit;
-}
-
-// Remover Item
-if (isset($_GET['remove_item'])) {
-    $index = $_GET['remove_item'];
-    if (isset($_SESSION['carrinho'][$index])) {
-        unset($_SESSION['carrinho'][$index]);
-        $_SESSION['carrinho'] = array_values($_SESSION['carrinho']); // Reindexar array
-    }
-    header("Location: index.php");
-    exit;
-}
-
-$totalVenda = 0;
-
-// --- INÍCIO DO HTML ---
-echo $head;
-echo $header;
-echo $aside;
-?>
-<!-- Incluindo CSS do jQuery UI para formatar a lista de sugestões corretamente -->
-<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
-<style>
-    .ui-autocomplete {
-        z-index: 9999 !important;
-    }
-    /* Configuração para a lista ficar fixa dentro do container #listaSugestoes */
-    #listaSugestoes .ui-autocomplete, #listaSugestoesProduto .ui-autocomplete {
-        position: static !important; /* Remove o posicionamento absoluto/flutuante */
-        top: auto !important;
-        left: auto !important;
-        width: 100% !important; /* Ocupa toda a largura do container */
-    }
-    /* Estilos do Carrinho PDV */
-    .pos-box {
-        background: #f9fafc;
-        border: 1px solid #d2d6de;
-        padding: 15px;
-        border-radius: 3px;
-    }
-    .total-display {
-        font-size: 2em;
-        font-weight: bold;
-        color: #00a65a;
-        text-align: right;
-    }
-    /* Alinha o título e os botões na mesma linha */
-    .content-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-    /* Botões de navegação personalizados (estilo semelhante a clientes) */
-    .nav-menu { margin: 0; }
-    .nav-menu a { display: inline-block; padding: 10px 20px; margin: 0 5px; background: #007bff; color: white; text-decoration: none; border-radius: 4px; font-size: 14px; }
-    .nav-menu a:hover { background: #0056b3; }
-</style>
-
-<div class="content-wrapper">
-    <!-- Cabeçalho da Página -->
-    <section class="content-header">
-        <h1>🛒 Lançamento de Pedido</h1>
-        <div class="nav-menu">
-            <a href="../">🏠 Home</a>
-            <a href="index.php">🛒 Vendas</a>
-        </div>
-    </section>
-
-    <!-- Conteúdo Principal -->
-    <section class="content">
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f6f9; color: #333; }
         
-        <?php require '../../layout/alert.php'; ?>
+        .container { max-width: 1000px; margin: 40px auto; padding: 0 20px; }
+        .card { background: white; border-radius: var(--radius); box-shadow: var(--shadow); padding: 30px; margin-bottom: 20px; }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+        .header h1 { font-size: 1.8rem; color: var(--dark); }
+        .btn-back { text-decoration: none; color: var(--secondary); font-weight: 500; }
+        
+        /* Form Styles */
+        .form-row { display: flex; gap: 15px; margin-bottom: 15px; align-items: flex-end; }
+        .form-group { display: flex; flex-direction: column; flex: 1; }
+        .form-group.small { flex: 0 0 100px; }
+        
+        label { font-weight: 600; margin-bottom: 5px; color: #555; font-size: 0.9rem; }
+        input, select { padding: 10px; border: 1px solid #ced4da; border-radius: 4px; font-size: 1rem; width: 100%; }
+        
+        .btn { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; color: white; font-size: 1rem; }
+        .btn-primary { background-color: var(--primary); }
+        .btn-success { background-color: var(--success); }
+        .btn-danger { background-color: var(--danger); }
+        
+        /* Table Styles */
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background-color: #f8f9fa; color: var(--dark); }
+        
+        /* Autocomplete UI */
+        .ui-autocomplete { background: white; border: 1px solid #ddd; list-style: none; padding: 0; max-height: 200px; overflow-y: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000; }
+        .ui-menu-item { padding: 10px; cursor: pointer; }
+        .ui-menu-item:hover { background-color: #f1f1f1; }
+        .ui-helper-hidden-accessible { display: none; }
+    </style>
+    
+    <!-- jQuery & jQuery UI (Required for Autocomplete) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+</head>
+<body>
 
-        <?php if (!empty($msg)): ?>
-            <div class="alert alert-info alert-dismissible">
-                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-                <i class="icon fa fa-info-circle"></i> <?php echo $msg; ?>
-            </div>
-        <?php endif; ?>
-
-        <div class="row">
-            <!-- COLUNA DA ESQUERDA: Busca de Cliente e Adição de Produtos -->
-            <div class="col-md-5">
-                <div class="box box-primary">
-            <div class="box-header with-border">
-                        <h3 class="box-title"><i class="fa fa-user-plus"></i> 1. Identificar Cliente</h3>
-            </div>
-            <div class="box-body">
-                        <!-- Busca Cliente -->
-                        <form id="searchClientForm" action="index.php" method="post">
-                            <div class="form-group">
-                                <label>Buscar Cliente (Nome ou CPF)</label>
-                                <div class="input-group">
-                                    <input type="text" class="form-control" id="cpfClienteSearch" name="CPF" placeholder="Digite para buscar..." autocomplete="off">
-                                    <span class="input-group-btn">
-                                        <button type="submit" class="btn btn-default"><i class="fa fa-search"></i></button>
-                                    </span>
-                                </div>
-                            </div>
-                        </form>
-                        <div id="listaSugestoes" style="margin-bottom: 10px;"></div>
-                    </div>
-                </div>
-
-                <div class="box box-success">
-                    <div class="box-header with-border">
-                        <h3 class="box-title"><i class="fa fa-cart-plus"></i> 2. Adicionar Produto</h3>
-                    </div>
-                    <div class="box-body">
-                        <form action="index.php" method="POST" id="formAddItem">
-                            <input type="hidden" name="add_item" value="1">
-                            <input type="hidden" id="prod_id" name="prod_id">
-                            <input type="hidden" id="prod_sku" name="prod_sku">
-                            
-                            <div class="form-group">
-                                <label>Buscar Produto (SKU ou Nome)</label>
-                                <input type="text" id="productSearch" name="prod_nome" class="form-control input-lg" placeholder="Digite SKU ou Nome..." required autocomplete="off">
-                            </div>
-                            <div id="listaSugestoesProduto" style="margin-bottom: 10px;"></div>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label>Quantidade</label>
-                                        <input type="number" id="prod_qtd" name="prod_qtd" class="form-control input-lg" value="1" min="1" required>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label>Valor Unit. (R$)</label>
-                                        <input type="text" id="prod_preco" name="prod_preco" class="form-control input-lg" placeholder="0.00" required>
-                                    </div>
-                                </div>
-                            </div>
-                            <button type="submit" class="btn btn-success btn-block btn-lg"><i class="fa fa-plus"></i> ADICIONAR AO CARRINHO</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-            <!-- COLUNA DA DIREITA: Carrinho e Finalização -->
-            <div class="col-md-7">
-                <form id="salesForm" action="../../App/Database/insertSales.php" method="POST">
-                    <div class="box box-warning">
-                        <div class="box-header with-border">
-                            <h3 class="box-title"><i class="fa fa-shopping-cart"></i> Carrinho de Compras</h3>
-                            <div class="box-tools pull-right">
-                                <a href="index.php?clear=1" class="btn btn-danger btn-xs"><i class="fa fa-trash"></i> Limpar Tudo</a>
-                            </div>
-                        </div>
-                        <div class="box-body">
-                            <div class="well well-sm" style="margin-bottom: 0;">
-                                <strong>Cliente:</strong> <span id="clienteNomeDisplay"><?php echo $_SESSION['Cliente'] ?? 'Não selecionado'; ?></span><br>
-                                <strong>CPF:</strong> <span id="clienteCpfDisplay"><?php echo $_SESSION['cpf'] ?? '-'; ?></span><br>
-                                <strong>CEP:</strong> <span id="clienteCepDisplay"><?php echo $_SESSION['Cep'] ?? '-'; ?></span>
-                            </div>
-                        </div>
-                        <div class="box-body table-responsive no-padding">
-                            <table class="table table-hover table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>SKU</th>
-                                        <th>Produto</th>
-                                        <th class="text-center">Qtd</th>
-                                        <th class="text-right">Preço</th>
-                                        <th class="text-right">Subtotal</th>
-                                        <th></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php if (empty($_SESSION['carrinho'])): ?>
-                                        <tr>
-                                            <td colspan="6" class="text-center text-muted" style="padding: 20px;">Nenhum item adicionado.</td>
-                                        </tr>
-                                    <?php else: ?>
-                                        <?php foreach ($_SESSION['carrinho'] as $key => $item): 
-                                            $totalVenda += $item['subtotal'];
-                                        ?>
-                                            <tr>
-                                                <td><?php echo $item['sku']; ?></td>
-                                                <td><?php echo $item['nome']; ?></td>
-                                                <td class="text-center"><?php echo $item['qtd']; ?></td>
-                                                <td class="text-right">R$ <?php echo number_format($item['preco'], 2, ',', '.'); ?></td>
-                                                <td class="text-right"><strong>R$ <?php echo number_format($item['subtotal'], 2, ',', '.'); ?></strong></td>
-                                                <td class="text-center">
-                                                    <a href="index.php?remove_item=<?php echo $key; ?>" class="text-danger"><i class="fa fa-times"></i></a>
-                                                    
-                                                    <!-- Inputs Ocultos para Envio ao insertSales.php -->
-                                                    <input type="hidden" name="idItem[]" value="<?php echo $item['id']; ?>">
-                                                    <input type="hidden" name="qtd[]" value="<?php echo $item['qtd']; ?>">
-                                                    <input type="hidden" name="Vd_Tax_Array[]" value="<?php echo $item['preco']; ?>">
-                                                </td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                    <?php endif; ?>
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="box-footer">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label>Data da Venda</label>
-                                        <input type="datetime-local" name="DataVenda" class="form-control" value="<?php echo date('Y-m-d\TH:i'); ?>">
-                                    </div>
-                                    <div class="form-group">
-                                        <label>Cód. Rastreio (Opcional)</label>
-                                        <input type="text" name="CodRastreioV" class="form-control" placeholder="Código de Rastreio">
-                                    </div>
-                                </div>
-                                <div class="col-md-6 text-right">
-                                    <p>Total da Venda:</p>
-                                    <div class="total-display">R$ <?php echo number_format($totalVenda, 2, ',', '.'); ?></div>
-                                </div>
-                            </div>
-                            
-                            <!-- Campos ocultos do cliente para manter compatibilidade -->
-                            <input type="hidden" name="NomeCliente" value="<?php echo $_SESSION['Cliente'] ?? ''; ?>">
-                            <input type="hidden" name="cpfCliente" value="<?php echo $_SESSION['cpf'] ?? ''; ?>">
-                            <input type="hidden" name="CepCliente" value="<?php echo $_SESSION['Cep'] ?? ''; ?>">
-                            <!-- Campos extras exigidos pelo insertSales antigo -->
-                            <input type="hidden" name="Vd_Tax" value="0"> <!-- Dummy, usamos o array agora -->
-
-                            <hr>
-                            <button type="submit" class="btn btn-success btn-block btn-lg" <?php echo empty($_SESSION['carrinho']) ? 'disabled' : ''; ?>>
-                                <i class="fa fa-check"></i> FINALIZAR PEDIDO
-                            </button>
-                        </div>
-                    </div>
-                </form>
-            </div>
+<div class="container">
+    <div class="card">
+        <div class="header">
+            <h1>Nova Venda (Carrinho)</h1>
+            <a href="../index.php" class="btn-back">🏠 Voltar ao Início</a>
         </div>
-    </section>
+
+        <!-- Mensagens de Erro/Sucesso -->
+        <?php
+        if(isset($_SESSION['msg'])){
+            echo '<div style="padding: 10px; background: #d4edda; color: #155724; margin-bottom: 15px; border-radius: 4px;">'.$_SESSION['msg'].'</div>';
+            unset($_SESSION['msg']);
+        }
+        ?>
+
+        <!-- Formulário de Adição de Produto -->
+        <form action="index.php" method="post">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Buscar Produto (Nome ou SKU)</label>
+                    <input type="text" id="searchProduct" placeholder="Digite para buscar..." required>
+                    <input type="hidden" name="idItem" id="idItem">
+                    <input type="hidden" name="prodSubmit" value="carrinho">
+                </div>
+                <div class="form-group small">
+                    <label>Qtd</label>
+                    <input type="number" name="qtd" value="1" min="1" required>
+                </div>
+                <!-- Campos extras que o carrinho.php pode esperar -->
+                <input type="hidden" name="taxa" value="0">
+                <input type="hidden" name="Frete" value="0">
+                <div class="form-group small">
+                    <label>Valor Unit.</label>
+                    <input type="text" name="Venda" id="Venda" value="0,00" required>
+                </div>
+                
+                <div class="form-group small">
+                    <label>&nbsp;</label>
+                    <button type="submit" class="btn btn-primary">Adicionar</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Formulário Final de Venda -->
+    <form action="../../App/Database/insertSales.php" method="POST">
+        <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
+                <h3 style="margin:0;">Itens no Carrinho</h3>
+                <a href="../../App/Database/remover.php?limpar=tudo" style="color: #6c757d; text-decoration: none; font-size: 0.9rem;" onclick="return confirm('Tem certeza que deseja limpar todo o carrinho?');">🗑️ Limpar carrinho</a>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>ID</th>
+                        <th>Produto</th>
+                        <th>Qtd</th>
+                        <th>Valor</th>
+                        <th>Ação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php 
+                        // Inclui o carrinho que processa a adição e exibe as linhas
+                        require_once '../../App/Database/carrinho.php'; 
+                    ?>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card">
+            <h3>Dados do Cliente e Entrega</h3>
+            
+            <!-- Busca de Cliente -->
+            <div class="form-group" id="box-search-client">
+                <label>Buscar Cliente</label>
+                <input type="text" id="searchClient" placeholder="Digite o nome ou CPF...">
+            </div>
+
+            <!-- Cliente Selecionado (Texto) -->
+            <div id="box-selected-client" style="display:none; background: #f8f9fa; padding: 15px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 15px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-size: 1.1rem; color: #333;">
+                        <strong id="txtNome"></strong> - CPF: <span id="txtCPF"></span> - CEP: <span id="txtCEP"></span>
+                    </span>
+                    <button type="button" id="btnRemoveClient" style="border:none; background:transparent; color:#dc3545; cursor:pointer; font-weight:bold;">Trocar</button>
+                </div>
+            </div>
+
+            <!-- Inputs Ocultos -->
+            <input type="hidden" name="NomeCliente" id="hNomeCliente">
+            <input type="hidden" name="cpfCliente" id="hCpfCliente">
+            <input type="hidden" name="CepCliente" id="hCepCliente">
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Data Venda</label>
+                    <input type="date" name="DataVenda" value="<?= date('Y-m-d') ?>" required>
+                </div>
+                <div class="form-group">
+                    <label>Código Rastreio</label>
+                    <input type="text" name="CodRastreioV">
+                </div>
+            </div>
+            
+            <button type="submit" class="btn btn-success" style="width: 100%; margin-top: 10px;">Finalizar Venda</button>
+        </div>
+    </form>
 </div>
-<?php
-echo $footer;
-echo $javascript;
-?>
-<script>
-  $(function() {
-    $("#cpfClienteSearch").autocomplete({
-      appendTo: "#listaSugestoes", // Define que a lista será criada dentro da div #listaSugestoes
-      source: "search_client.php",
-      minLength: 2, // Começa a buscar após 2 caracteres
-      select: function(event, ui) {
-        // Preenche os campos do formulário com os dados retornados
-        // Submete o formulário de busca para salvar os dados na SESSÃO PHP.
-        // Isso garante que os dados do cliente persistam ao adicionar produtos (recarregar página).
-        $("#cpfClienteSearch").val(ui.item.cpf);
-        $("#searchClientForm").submit();
-        return false;
-      }
-    });
-  });
 
-  // Autocomplete de Produtos
-  $(function() {
-    $("#productSearch").autocomplete({
-      appendTo: "#listaSugestoesProduto",
-      source: "search_product.php",
-      minLength: 1,
-      select: function(event, ui) {
-        // Preenche os campos ocultos e visíveis
-        $('#prod_id').val(ui.item.id);
-        $('#prod_sku').val(ui.item.sku);
-        $('#productSearch').val(ui.item.nome); // Mostra o nome no campo de busca
-        $('#prod_preco').val(ui.item.preco);
-        
-        // Foca na quantidade para agilizar
-        $('#prod_qtd').focus();
-        $('#prod_qtd').select();
-        
-        return false; // Evita que o valor padrão do autocomplete substitua o nosso
-      }
+<script>
+    $(document).ready(function() {
+        // Autocomplete Produto
+        $("#searchProduct").autocomplete({
+            source: "search_product.php",
+            minLength: 2,
+            select: function(event, ui) {
+                $("#idItem").val(ui.item.id);
+                // Atualizar campo de preço oculto para o carrinho
+                $("input[name='Venda']").val(ui.item.preco); 
+            }
+        });
+
+        // Autocomplete Cliente
+        $("#searchClient").autocomplete({
+            source: "search_client.php",
+            minLength: 2,
+            select: function(event, ui) {
+                // Preenche inputs ocultos
+                $("#hNomeCliente").val(ui.item.nome);
+                $("#hCpfCliente").val(ui.item.cpf);
+                $("#hCepCliente").val(ui.item.cep);
+
+                // Preenche texto visual
+                $("#txtNome").text(ui.item.nome);
+                $("#txtCPF").text(ui.item.cpf);
+                $("#txtCEP").text(ui.item.cep);
+
+                // Alterna visualização
+                $("#box-search-client").hide();
+                $("#box-selected-client").show();
+                
+                $(this).val(""); // Limpa busca
+                return false;
+            }
+        });
+
+        // Botão Trocar Cliente
+        $("#btnRemoveClient").click(function(){
+            $("#hNomeCliente").val("");
+            $("#hCpfCliente").val("");
+            $("#hCepCliente").val("");
+            
+            $("#box-selected-client").hide();
+            $("#box-search-client").show();
+            $("#searchClient").focus();
+        });
     });
-  });
 </script>
+
+</body>
+</html>

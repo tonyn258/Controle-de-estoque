@@ -6,6 +6,15 @@ require_once '../../App/Models/cliente.class.php';
 $value = "";
 $resp = $cliente->indexCliente($value, $perm);
 $resps = json_decode($resp, true);
+
+// Ordenação Padrão: ID do maior para o menor (Simulando backend)
+if (is_array($resps)) {
+    usort($resps, function($a, $b) {
+        $idA = (is_array($a) && isset($a['idCliente'])) ? $a['idCliente'] : 0;
+        $idB = (is_array($b) && isset($b['idCliente'])) ? $b['idCliente'] : 0;
+        return $idB - $idA;
+    });
+}
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -30,6 +39,12 @@ $resps = json_decode($resp, true);
         .btn-edit { background: #28a745; color: white; }
         .btn-edit:hover { background: #218838; }
         .actions { text-align: center; }
+        
+        /* Estilos para Filtros de Ordenação */
+        .th-header { display: flex; justify-content: space-between; align-items: center; }
+        .filter-controls { display: flex; flex-direction: column; margin-left: 5px; }
+        .filter-btn { background: none; border: none; color: rgba(255,255,255,0.6); cursor: pointer; font-size: 10px; line-height: 10px; padding: 0; }
+        .filter-btn:hover { color: white; }
     </style>
 
 
@@ -54,8 +69,24 @@ $resps = json_decode($resp, true);
         <table>
             <thead>
                 <tr>
-                    <th>#</th>
-                    <th>Nome Cliente</th>                    
+                    <th>
+                        <div class="th-header">
+                            #
+                            <div class="filter-controls">
+                                <button class="filter-btn" onclick="sortTable(0, 'num', 'asc')" title="Menor para Maior">▲</button>
+                                <button class="filter-btn" onclick="sortTable(0, 'num', 'desc')" title="Maior para Menor">▼</button>
+                            </div>
+                        </div>
+                    </th>
+                    <th>
+                        <div class="th-header">
+                            Nome Cliente
+                            <div class="filter-controls">
+                                <button class="filter-btn" onclick="sortTable(1, 'str', 'asc')" title="A-Z">▲</button>
+                                <button class="filter-btn" onclick="sortTable(1, 'str', 'desc')" title="Z-A">▼</button>
+                            </div>
+                        </div>
+                    </th>                    
                     <th>CPF</th>
                     <th>Cep</th>
                     <th>Status</th>
@@ -88,7 +119,7 @@ $resps = json_decode($resp, true);
     </div>
 </div>
 <script>
-    document.getElementById('searchInput').addEventListener('keyup', function() {
+    document.getElementById('search').addEventListener('keyup', function() {
         var searchValue = this.value.toLowerCase();
         var tableRows = document.querySelectorAll('table tbody tr');
 
@@ -101,6 +132,26 @@ $resps = json_decode($resp, true);
             }
         });
     });
+
+    function sortTable(colIndex, type, order) {
+        var tbody = document.querySelector("table tbody");
+        var rows = Array.from(tbody.rows);
+
+        rows.sort(function(a, b) {
+            var valA = a.cells[colIndex].innerText.trim();
+            var valB = b.cells[colIndex].innerText.trim();
+
+            if (type === 'num') {
+                return order === 'asc' ? (parseInt(valA) - parseInt(valB)) : (parseInt(valB) - parseInt(valA));
+            } else {
+                return order === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+            }
+        });
+
+        rows.forEach(function(row) {
+            tbody.appendChild(row);
+        });
+    }
 </script>
 </body>
 </html>

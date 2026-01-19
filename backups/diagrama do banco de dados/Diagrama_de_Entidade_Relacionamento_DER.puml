@@ -1,0 +1,110 @@
+@startuml Diagrama_Entidade_Relacionamento_DER
+
+hide circle
+skinparam linetype ortho
+skinparam entity {
+BorderColor Black
+BackgroundColor White
+}
+
+entity USUARIO {
++idUser : INT <<PK>>
+Username : VARCHAR
+Email : VARCHAR
+Password : VARCHAR
+arquivo : VARCHAR
+DataRegistro : DATE
+Permissao : TINYINT
+}
+
+entity CATEGORIA_PRODUTO {
++idCategoria : INT <<PK>>
+nomeCategoria : VARCHAR
+statusCategoria : ENUM
+dataCadastro : TIMESTAMP
+}
+
+entity ANUNCIO {
++idAnuncio : INT <<PK>>
+skuAnuncio : TEXT
+model : TEXT
+NomeProduto : TEXT
+ValorCompra : DECIMAL
+ValorVenda : DECIMAL
+DataCompra : DATE
+QuantItens : DECIMAL
+QuantItensVend : DECIMAL
+Ativo : VARCHAR
+public : INT
+descricao : TEXT
+idCategoria : INT <<FK>>
+usuario_id : INT <<FK>>
+}
+
+entity ANUNCIO_IMAGEM {
++idImagem : INT <<PK>>
+caminhoImagem : VARCHAR
+ordem : INT
+dataCadastro : TIMESTAMP
+anuncio_id : INT <<FK>>
+}
+
+entity CLIENTE {
++idCliente : INT <<PK>>
+NomeCliente : VARCHAR
+CepCliente : VARCHAR
+cpfCliente : TEXT
+dataRegCliente : TIMESTAMP
+statusCliente : INT
+Usuario_idUsuario : INT <<FK>>
+}
+
+entity PRODUTO {
++idProduto : INT <<PK>>
+skuProduto : VARCHAR
+nomeProduto : VARCHAR
+modelo : VARCHAR
+marca : VARCHAR
+Conexao : VARCHAR
+descricao : TEXT
+especificacao : TEXT
+statusProduto : ENUM
+public : TINYINT
+dataCadastro : DATETIME
+categoria : VARCHAR
+DataCompra : DATE
+QuantItens : INT
+ValorCompra : DECIMAL
+usuario_id : INT <<FK>>
+}
+
+entity VENDAS {
++idVendas : INT <<PK>>
+Itensquant : INT
+Compra_id : DECIMAL
+valor : DECIMAL
+anuncio_data : DATE
+DataVenda : DATE
+CodRastreioV : VARCHAR
+Vd_Tax : DECIMAL
+Diferenca_Venda_Compra : DECIMAL
+Diferenca_Quantidade : DECIMAL
+Venda_Total : DECIMAL
+anuncio_id : INT <<FK>>
+cliente_idCliente : INT <<FK>>
+usuario_id : INT <<FK>>
+}
+
+USUARIO ||--o{ ANUNCIO : cadastra
+USUARIO ||--o{ PRODUTO : controla
+USUARIO ||--o{ CLIENTE : registra
+USUARIO ||--o{ VENDAS : realiza
+
+CATEGORIA_PRODUTO ||--o{ ANUNCIO : classifica
+
+ANUNCIO ||--o{ ANUNCIO_IMAGEM : possui
+ANUNCIO ||--o{ VENDAS : vendido_em
+
+CLIENTE ||--o{ VENDAS : compra
+
+@enduml
