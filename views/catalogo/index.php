@@ -33,6 +33,7 @@ try {
 // Lógica de Filtros (Estoque)
 $filtroEstoque = isset($_GET['estoque']) ? $_GET['estoque'] : 'com_estoque';
 $viewMode = isset($_GET['view']) ? $_GET['view'] : 'grid'; // 'grid' (página) ou 'list' (lista)
+$busca = isset($_GET['busca']) ? trim($_GET['busca']) : '';
 
 // Construção da Query SQL
 // Regra: Listar apenas anúncios onde Ativo = 1 e public = 1
@@ -60,6 +61,10 @@ if ($viewMode === 'list') {
             FROM anuncio a 
             LEFT JOIN categoria_produto c ON a.idCategoria = c.idCategoria
             WHERE 1=1";
+
+    if ($busca) {
+        $sql .= " AND (a.skuAnuncio LIKE :busca OR a.NomeProduto LIKE :busca)";
+    }
 
     // Filtro de Estoque (WHERE)
     if ($filtroEstoque === 'com_estoque') {
@@ -101,7 +106,13 @@ if ($viewMode === 'list') {
             FROM anuncio a 
             LEFT JOIN categoria_produto c ON a.idCategoria = c.idCategoria
             WHERE 1=1
-            GROUP BY a.skuAnuncio";
+            ";
+
+    if ($busca) {
+        $sql .= " AND (a.skuAnuncio LIKE :busca OR a.NomeProduto LIKE :busca)";
+    }
+
+    $sql .= " GROUP BY a.skuAnuncio";
 
     // Filtro de Estoque (HAVING)
     if ($filtroEstoque === 'com_estoque') {
@@ -115,7 +126,11 @@ if ($viewMode === 'list') {
 
 try {
     $stmt = $pdo->prepare($sql);
-    $stmt->execute();
+    $params = [];
+    if ($busca) {
+        $params[':busca'] = "%$busca%";
+    }
+    $stmt->execute($params);
     $anuncios = $stmt->fetchAll();
 } catch (PDOException $e) {
     die("Erro ao buscar anúncios: " . $e->getMessage());
@@ -146,13 +161,70 @@ try {
         .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
         
         /* Cabeçalho e Filtros */
-        .catalog-header { text-align: center; margin-bottom: 30px; }
+        .catalog-header { text-align: center; margin-bottom: 20px; }
         .catalog-header h1 { font-size: 2rem; margin-bottom: 10px; color: var(--dark); }
         
-        .filters { display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; flex-wrap: wrap; }
-        .btn { padding: 8px 16px; border-radius: 20px; text-decoration: none; font-size: 0.9rem; transition: all 0.2s; border: 1px solid #ddd; background: white; color: var(--secondary); }
-        .btn:hover { background-color: #e2e6ea; }
-        .btn.active { background-color: var(--primary); color: white; border-color: var(--primary); }
+        /* Barra de Controles Unificada */
+        .controls-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: white;
+            padding: 15px 20px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 30px;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filter-group { display: flex; gap: 5px; }
+        .filter-pill {
+            padding: 6px 15px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            color: var(--secondary);
+            background: #f1f1f1;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+            font-weight: 500;
+        }
+        .filter-pill:hover { background: #e2e6ea; }
+        .filter-pill.active { background: var(--primary); color: white; }
+
+        .search-form { display: flex; flex-grow: 1; max-width: 400px; position: relative; }
+        .search-input {
+            width: 100%;
+            padding: 8px 40px 8px 15px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            outline: none;
+            font-size: 0.95rem;
+            transition: border-color 0.2s;
+        }
+        .search-input:focus { border-color: var(--primary); }
+        .search-btn {
+            position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+            background: none; border: none; cursor: pointer; font-size: 1.1rem; color: #777;
+        }
+
+        .view-group { display: flex; gap: 8px; background: #f8f9fa; padding: 4px; border-radius: 8px; }
+        .view-icon {
+            text-decoration: none; font-size: 1.3rem; padding: 2px 10px; border-radius: 6px;
+            transition: all 0.2s; filter: grayscale(100%); opacity: 0.6; line-height: 1.2;
+        }
+        .view-icon:hover, .view-icon.active { filter: none; opacity: 1; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+
+        .btn-new {
+            background-color: #28a745; color: white; padding: 10px 20px; border-radius: 25px;
+            text-decoration: none; font-weight: 600; font-size: 0.95rem; transition: background 0.2s;
+            white-space: nowrap; box-shadow: 0 2px 5px rgba(40, 167, 69, 0.3);
+        }
+        .btn-new:hover { background-color: #218838; transform: translateY(-1px); }
+        
+        .btn-back { display: inline-block; margin-bottom: 20px; color: var(--secondary); text-decoration: none; font-weight: 500; }
+        .btn-back:hover { color: var(--primary); }
 
         /* Grid de Produtos (Responsivo) */
         .grid {
@@ -212,38 +284,74 @@ try {
         th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee; }
         th { background-color: #f8f9fa; font-weight: 600; color: var(--dark); }
         tr:hover { background-color: #f1f1f1; }
-        .btn-sm { padding: 4px 8px; font-size: 0.8rem; border-radius: 4px; }
-        .btn-edit { background-color: var(--primary); color: white; border: none; cursor: pointer; text-decoration: none; }
-        .btn-edit:hover { background-color: #0056b3; }
-        .status-dot { height: 10px; width: 10px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+        
+        /* Controles (Status e Ações) */
+        .controls-cell { display: flex; align-items: center; gap: 15px; }
+        .status-group, .action-group { display: flex; align-items: center; gap: 8px; }
+        
+        .status-dot { 
+            height: 12px; width: 12px; border-radius: 50%; display: inline-block; 
+            cursor: pointer; transition: transform 0.2s; 
+        }
+        .status-dot:hover { transform: scale(1.2); }
+        
+        /* Mapeamento de Cores de Status */
+        .dot-active { background-color: var(--success); }
+        .dot-inactive { background-color: var(--danger); }
+        .dot-public { background-color: var(--primary); }
+        .dot-hidden { background-color: var(--dark); }
+
+        .action-emoji { 
+            font-size: 1.1rem; text-decoration: none; cursor: pointer; 
+            transition: transform 0.2s; border: none; background: transparent; line-height: 1; 
+        }
+        .action-emoji:hover { transform: scale(1.2); }
 
         /* Empty State */
         .empty-state { grid-column: 1 / -1; text-align: center; padding: 40px; color: #777; background: white; border-radius: var(--radius); }
         
         @media (max-width: 576px) {
             .grid { grid-template-columns: 1fr; }
+            .controls-bar { flex-direction: column; align-items: stretch; gap: 15px; }
+            .search-form { max-width: 100%; }
+            .filter-group, .view-group { justify-content: center; }
+            .btn-new { text-align: center; }
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <a href="../index.php" class="btn" style="margin-bottom: 20px; display: inline-block;">🏠 Voltar ao Início</a>
+    <a href="../index.php" class="btn-back">🏠 Voltar ao Início</a>
     <header class="catalog-header">
         <h1>Catálogo de Produtos</h1>
-        <div class="filters">
-            <a href="?estoque=todos" class="btn <?= $filtroEstoque == 'todos' ? 'active' : '' ?>">Todos</a>
-            <a href="?estoque=com_estoque" class="btn <?= $filtroEstoque == 'com_estoque' ? 'active' : '' ?>">Com Estoque</a>
-            <a href="?estoque=sem_estoque" class="btn <?= $filtroEstoque == 'sem_estoque' ? 'active' : '' ?>">Sem Estoque</a>
-        </div>
-        
-        <!-- Controle de Visualização -->
-        <div class="view-controls" style="margin-top: 15px;">
-            <a href="?estoque=<?= $filtroEstoque ?>&view=grid" class="btn <?= $viewMode == 'grid' ? 'active' : '' ?>">📅 Grade</a>
-            <a href="?estoque=<?= $filtroEstoque ?>&view=list" class="btn <?= $viewMode == 'list' ? 'active' : '' ?>">☰ Lista</a>
-            <a href="add.php" class="btn" style="background-color: #28a745; color: white; border-color: #28a745; margin-left: 10px;">+ Novo Anúncio</a>
-        </div>
     </header>
+
+    <div class="controls-bar">
+        <!-- 1. Filtros de Estoque -->
+        <div class="filter-group">
+            <a href="?estoque=todos&view=<?= $viewMode ?>&busca=<?= urlencode($busca) ?>" class="filter-pill <?= $filtroEstoque == 'todos' ? 'active' : '' ?>">Todos</a>
+            <a href="?estoque=com_estoque&view=<?= $viewMode ?>&busca=<?= urlencode($busca) ?>" class="filter-pill <?= $filtroEstoque == 'com_estoque' ? 'active' : '' ?>">Com Estoque</a>
+            <a href="?estoque=sem_estoque&view=<?= $viewMode ?>&busca=<?= urlencode($busca) ?>" class="filter-pill <?= $filtroEstoque == 'sem_estoque' ? 'active' : '' ?>">Sem Estoque</a>
+        </div>
+
+        <!-- 2. Campo de Busca -->
+        <form action="" method="GET" class="search-form">
+            <input type="hidden" name="estoque" value="<?= htmlspecialchars($filtroEstoque) ?>">
+            <input type="hidden" name="view" value="<?= htmlspecialchars($viewMode) ?>">
+            <input type="text" name="busca" placeholder="Buscar por SKU ou produto" value="<?= htmlspecialchars($busca) ?>" class="search-input">
+            <button type="submit" class="search-btn">🔍</button>
+        </form>
+
+        <!-- 3. Modo de Visualização -->
+        <div class="view-group">
+            <a href="?estoque=<?= $filtroEstoque ?>&view=grid&busca=<?= urlencode($busca) ?>" class="view-icon <?= $viewMode == 'grid' ? 'active' : '' ?>" title="Grade">📅</a>
+            <a href="?estoque=<?= $filtroEstoque ?>&view=list&busca=<?= urlencode($busca) ?>" class="view-icon <?= $viewMode == 'list' ? 'active' : '' ?>" title="Lista">☰</a>
+        </div>
+
+        <!-- 4. Novo Anúncio -->
+        <a href="add.php" class="btn-new">+ Novo Anúncio</a>
+    </div>
 
     <?php if (empty($anuncios)): ?>
         <div class="empty-state">
@@ -262,8 +370,7 @@ try {
                             <th>Categoria</th>
                             <th>Valor Venda</th>
                             <th>Estoque</th>
-                            <th>Status</th>
-                            <th>Ações</th>
+                            <th>Opções</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -274,12 +381,12 @@ try {
                                 $public = $item['public'] == 1;
                             ?>
                             <tr>
-                                <td><?= htmlspecialchars($item['skuAnuncio']) ?></td>
+                                <td style="font-size: 0.6em;"><?= htmlspecialchars($item['skuAnuncio']) ?></td>
                                 <td>
                                     <strong><?= htmlspecialchars($item['NomeProduto']) ?></strong>
                                     <?php if($item['model']): ?><br><small class="text-muted"><?= htmlspecialchars($item['model']) ?></small><?php endif; ?>
                                 </td>
-                                <td><?= htmlspecialchars($item['NomeCategoria'] ?? 'N/A') ?></td>
+                                <td style="font-size: 0.8em;"><?= htmlspecialchars($item['NomeCategoria'] ?? 'N/A') ?></td>
                                 <td>R$ <?= number_format($item['ValorVenda'], 2, ',', '.') ?></td>
                                 <td>
                                     <span class="badge <?= $estoqueAtual > 0 ? 'badge-success' : 'badge-danger' ?>">
@@ -287,15 +394,16 @@ try {
                                     </span>
                                 </td>
                                 <td>
-                                    <div title="Ativo no Sistema">
-                                        <span class="status-dot" style="background: <?= $ativo ? '#28a745' : '#dc3545' ?>"></span> <?= $ativo ? 'Ativo' : 'Inativo' ?>
+                                    <div class="controls-cell">
+                                        <div class="status-group">
+                                            <span class="status-dot <?= $ativo ? 'dot-active' : 'dot-inactive' ?>" title="<?= $ativo ? 'Ativo' : 'Inativo' ?>"></span>
+                                            <span class="status-dot <?= $public ? 'dot-public' : 'dot-hidden' ?>" title="<?= $public ? 'Público' : 'Oculto' ?>"></span>
+                                        </div>
+                                        <div class="action-group">
+                                            <a href="edit.php?id=<?= $item['idAnuncio'] ?>" class="action-emoji" title="Editar">✏️</a>
+                                            <a href="edit.php?id=<?= $item['idAnuncio'] ?>&action=copy" class="action-emoji" title="Copiar">📄</a>
+                                        </div>
                                     </div>
-                                    <div title="Visível no Site">
-                                        <span class="status-dot" style="background: <?= $public ? '#007bff' : '#6c757d' ?>"></span> <?= $public ? 'Público' : 'Oculto' ?>
-                                    </div>
-                                </td>
-                                <td>
-                                    <a href="edit.php?id=<?= $item['idAnuncio'] ?>" class="btn btn-sm btn-edit">✏️ Editar</a>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -325,7 +433,7 @@ try {
                         </div>
                         <div class="card-body">
                             <div class="card-meta">
-                                <span>SKU: <?= htmlspecialchars($item['skuAnuncio']) ?></span>
+                                <span>SKU: <span style="font-size: 0.5em;"><?= htmlspecialchars($item['skuAnuncio']) ?></span></span>
                                 <span><?= htmlspecialchars($item['model']) ?></span>
                             </div>
                             <h3 class="card-title"><?= htmlspecialchars($item['NomeProduto']) ?></h3>

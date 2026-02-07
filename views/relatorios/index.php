@@ -1,47 +1,103 @@
+<?php
+require_once '../../App/auth.php';
+?>
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Relatórios - Sistema de Vendas</title>
+    <title>Relatórios - Sistema de Controle</title>
+    
+    <!-- Import Custom CSS -->
+    <link rel="stylesheet" href="../../assets/css/relatorios.css">
+
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-        .container { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); text-align: center; max-width: 500px; width: 90%; }
-        h1 { color: #333; margin-bottom: 30px; font-size: 2.5em; }
-        .menu-item { display: block; background: #007bff; color: white; text-decoration: none; padding: 15px 25px; margin: 15px 0; border-radius: 8px; font-size: 18px; transition: all 0.3s; }
-        .menu-item:hover { background: #0056b3; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,123,255,0.3); }
-        .menu-item.back { background: #6c757d; }
-        .menu-item.back:hover { background: #5a6268; }
+        /* Estilos de Layout (Baseado no Catálogo) */
+        :root {
+            --bg-body: #f4f6f9;
+            --font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;
+            --dark: #343a40;
+            --secondary: #6c757d;
+            --primary: #007bff;
+        }
         
-        /* Estilo para Legacy/Antigo */
-        .legacy-section { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; }
-        .legacy-title { font-size: 0.9em; color: #999; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; }
-        .menu-item.legacy { background: #f8f9fa; color: #666; border: 1px solid #ddd; font-size: 16px; }
-        .menu-item.legacy:hover { background: #e2e6ea; color: #333; transform: none; box-shadow: none; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         
-        .icon { margin-right: 10px; }
+        body { 
+            font-family: var(--font-family); 
+            background-color: var(--bg-body); 
+            color: #333; 
+            line-height: 1.5; 
+        }
+        
+        .container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            padding: 20px; 
+        }
+        
+        .btn-back { 
+            display: inline-block; 
+            margin-bottom: 20px; 
+            color: var(--secondary); 
+            text-decoration: none; 
+            font-weight: 500; 
+            font-size: 1rem;
+            transition: color 0.2s;
+        }
+        .btn-back:hover { color: var(--primary); }
+        
+        .page-header { 
+            text-align: center; 
+            margin-bottom: 40px; 
+        }
+        .page-header h1 { 
+            font-size: 2rem; 
+            margin-bottom: 5px; 
+            color: var(--dark); 
+        }
+        .page-header small { 
+            color: var(--secondary); 
+            font-size: 1rem; 
+            font-weight: normal; 
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>📊 Relatórios</h1>
-        <p style="margin-bottom: 30px; color: #666;">Análise de Vendas e Dados</p>
-        
-        <a href="../" class="menu-item back">
-            <span class="icon">🏠</span>Menu Principal
+
+<div class="container">
+    <a href="../index.php" class="btn-back">🏠 Voltar ao Início</a>
+
+    <header class="page-header">
+        <h1>
+            📊 Relatórios
+            <small>Central de Análise</small>
+        </h1>
+    </header>
+
+    <div class="report-grid">
+        <!-- Relatório de Vendas -->
+        <a href="view_vendas.php" class="report-card">
+            <div class="report-icon">📋</div>
+            <div class="report-info">
+                <h3>Relatório de Vendas</h3>
+                <p>Listagem detalhada de transações</p>
+            </div>
         </a>
-        
-        <!-- Relatórios Atuais -->
-        <a href="view_vendas.php" class="menu-item">
-            <span class="icon">📋</span>Relatório de Vendas
+
+        <!-- Gráficos -->
+        <a href="dashboard.php" class="report-card">
+            <div class="report-icon">📈</div>
+            <div class="report-info">
+                <h3>Gráficos & Dashboard</h3>
+                <p>Análise visual de desempenho</p>
+            </div>
         </a>
-        
-        <a href="dashboard.php" class="menu-item">
-            <span class="icon">📊</span>Gráficos
-        </a>
-        
-     
     </div>
+</div>
+
+<!-- Import Custom JS -->
+<script src="../../assets/js/relatorios.js"></script>
+
 </body>
 </html>

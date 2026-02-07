@@ -20,8 +20,8 @@ $sql_compras = ($selectedYear === 'all') ?
   "SELECT DataCompra, ValorCompra, QuantItens FROM anuncio WHERE YEAR(DataCompra) = '$selectedYear'";
 
 $sql_vendas = ($selectedYear === 'all') ?
-  "SELECT DataVenda, Vd_Tax, valor FROM vendas" :
-  "SELECT DataVenda, Vd_Tax, valor FROM vendas WHERE YEAR(DataVenda) = '$selectedYear'";
+  "SELECT DataVenda, Venda_Total, valor FROM vendas" :
+  "SELECT DataVenda, Venda_Total, valor FROM vendas WHERE YEAR(DataVenda) = '$selectedYear'";
 
 $result_compras = mysqli_query($conexao->SQL, $sql_compras);
 $result_vendas = mysqli_query($conexao->SQL, $sql_vendas);
@@ -40,8 +40,8 @@ while ($row = mysqli_fetch_assoc($result_compras)) {
 while ($row = mysqli_fetch_assoc($result_vendas)) {
   $mes = (int)date("n", strtotime($row['DataVenda']));
   
-  $dataArray[$mes]['venda'] += $row['Vd_Tax'];
-  $dataArray[$mes]['lucro'] += ($row['Vd_Tax'] - $row['valor']);
+  $dataArray[$mes]['venda'] += $row['Venda_Total'];
+  $dataArray[$mes]['lucro'] += ($row['Venda_Total'] - $row['valor']);
 }
 
 // Calcula o total de compras realizadas
@@ -71,12 +71,12 @@ $daysInMonth = cal_days_in_month(CAL_GREGORIAN, $selectedMonth, $selectedYear);
 $dailyData = array_fill(1, $daysInMonth, 0);
 
 // Consulta para vendas diárias
-$sqlDaily = "SELECT DataVenda, Vd_Tax FROM vendas WHERE MONTH(DataVenda) = '$selectedMonth' AND YEAR(DataVenda) = '$selectedYear'";
+$sqlDaily = "SELECT DataVenda, Venda_Total FROM vendas WHERE MONTH(DataVenda) = '$selectedMonth' AND YEAR(DataVenda) = '$selectedYear'";
 $resultDaily = mysqli_query($conexao->SQL, $sqlDaily);
 
 while ($row = mysqli_fetch_assoc($resultDaily)) {
     $day = intval(date('d', strtotime($row["DataVenda"])));
-    $dailyData[$day] += (float)$row["Vd_Tax"];
+    $dailyData[$day] += (float)$row["Venda_Total"];
 }
 $dailyLabels = array_keys($dailyData);
 $dailyValues = array_values($dailyData);

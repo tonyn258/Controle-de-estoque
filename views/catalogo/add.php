@@ -57,6 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $valorVenda = str_replace(',', '.', str_replace('.', '', $_POST['ValorVenda'] ?? '0'));
     
     $qtd = filter_input(INPUT_POST, 'QuantItens', FILTER_VALIDATE_INT);
+    $dataCompra = $_POST['DataCompra'] ?? date('Y-m-d');
     $descricao = $_POST['descricao'] ?? '';
     $ativo = isset($_POST['Ativo']) ? 1 : 0;
     $public = isset($_POST['public']) ? 1 : 0;
@@ -78,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 QuantItens, QuantItensVend, descricao, Ativo, public, usuario_id, DataCompra
             ) VALUES (
                 :sku, :model, :nome, :cat, :vcompra, :vvenda, 
-                :qtd, 0, :desc, :ativo, :public, :uid, NOW()
+                :qtd, 0, :desc, :ativo, :public, :uid, :datacompra
             )";
 
             $stmt = $pdo->prepare($sqlAnuncio);
@@ -93,7 +94,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':desc' => $descricao,
                 ':ativo' => $ativo,
                 ':public' => $public,
-                ':uid' => $usuario_id
+                ':uid' => $usuario_id,
+                ':datacompra' => $dataCompra
             ]);
 
             $idAnuncio = $pdo->lastInsertId();
@@ -298,6 +300,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="form-group">
                 <label for="ValorVenda">Valor de Venda (R$)</label>
                 <input type="text" name="ValorVenda" id="ValorVenda" class="money" placeholder="0,00" value="<?= htmlspecialchars($_POST['ValorVenda'] ?? '') ?>">
+            </div>
+
+            <div class="form-group">
+                <label for="DataCompra">Data da Compra</label>
+                <input type="date" name="DataCompra" id="DataCompra" value="<?= htmlspecialchars($_POST['DataCompra'] ?? date('Y-m-d')) ?>">
             </div>
 
             <!-- Descrição -->

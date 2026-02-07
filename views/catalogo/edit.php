@@ -36,6 +36,11 @@ $sucesso = '';
 $categorias = [];
 $produto = [];
 $imagensExistentes = [];
+$is_copy_mode = isset($_GET['action']) && $_GET['action'] === 'copy';
+
+if (isset($_GET['copied'])) {
+    $sucesso = "Anúncio copiado com sucesso! Você está editando a nova cópia.";
+}
 
 // Recuperar ID do Anúncio
 $idAnuncio = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
@@ -58,10 +63,17 @@ try {
         die("Anúncio não encontrado.");
     }
 
-    // Imagens
+    // Carregar imagens (tanto para edição quanto para cópia para exibição)
     $stmtImg = $pdo->prepare("SELECT * FROM anuncio_imagem WHERE anuncio_id = :id ORDER BY ordem ASC");
     $stmtImg->execute([':id' => $idAnuncio]);
     $imagensExistentes = $stmtImg->fetchAll();
+
+    // Se for modo cópia, ajustar dados para o formulário
+    if ($is_copy_mode) {
+        $produto['skuAnuncio'] .= '-COPIA';
+        $produto['QuantItensVend'] = 0;
+        $produto['DataCompra'] = date('Y-m-d'); // Resetar data para hoje
+    }
 
 } catch (PDOException $e) {
     $erro = "Erro ao carregar dados: " . $e->getMessage();
@@ -69,6 +81,7 @@ try {
 
 // 3. Processar Formulário (POST)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $is_copy_mode_on_post = isset($_GET['action']) && $_GET['action'] === 'copy';
     // Sanitização e Validação
     $sku = filter_input(INPUT_POST, 'skuAnuncio', FILTER_SANITIZE_SPECIAL_CHARS);
     $model = filter_input(INPUT_POST, 'model', FILTER_SANITIZE_SPECIAL_CHARS);
@@ -79,7 +92,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $valorVenda = str_replace(',', '.', str_replace('.', '', $_POST['ValorVenda'] ?? '0'));
     
     $qtd = filter_input(INPUT_POST, 'QuantItens', FILTER_VALIDATE_INT);
-    $qtdVend = filter_input(INPUT_POST, 'QuantItensVend', FILTER_VALIDATE_INT);
+    $qtdVend = $is_copy_mode_on_post ? 0 : filter_input(INPUT_POST, 'QuantItensVend', FILTER_VALIDATE_INT);
+    $dataCompra = $_POST['DataCompra'] ?? null;
     $descricao = $_POST['descricao'] ?? '';
     $ativo = isset($_POST['Ativo']) ? 1 : 0;
     $public = isset($_POST['public']) ? 1 : 0;
@@ -88,86 +102,140 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Validações
     if (!$sku || !$nome || !$idCategoria) {
         $erro = "Preencha os campos obrigatórios.";
-    } elseif ($qtdVend > $qtd) {
+    } elseif (!$is_copy_mode_on_post && $qtdVend > $qtd) {
         $erro = "A quantidade vendida não pode ser maior que a quantidade total.";
     } else {
         try {
             $pdo->beginTransaction();
 
-            // Atualizar Anúncio
-            $sqlUpd = "UPDATE anuncio SET 
-                skuAnuncio = :sku, model = :model, NomeProduto = :nome, idCategoria = :cat, 
-                ValorCompra = :vcompra, ValorVenda = :vvenda, QuantItens = :qtd, 
-                QuantItensVend = :qtdVend, descricao = :desc, Ativo = :ativo, public = :public, 
-                usuario_id = :uid 
-                WHERE idAnuncio = :id";
+            $targetAnuncioId = $idAnuncio; // Padrão para modo de edição
 
-            $stmt = $pdo->prepare($sqlUpd);
-            $stmt->execute([
-                ':sku' => $sku, ':model' => $model, ':nome' => $nome, ':cat' => $idCategoria,
-                ':vcompra' => $valorCompra, ':vvenda' => $valorVenda, ':qtd' => $qtd,
-                ':qtdVend' => $qtdVend, ':desc' => $descricao, ':ativo' => $ativo,
-                ':public' => $public, ':uid' => $usuario_id, ':id' => $idAnuncio
-            ]);
+            if ($is_copy_mode_on_post) {
+                // LÓGICA DE DUPLICAÇÃO (INSERT)
+                $sqlIns = "INSERT INTO anuncio (skuAnuncio, model, NomeProduto, idCategoria, ValorCompra, ValorVenda, QuantItens, QuantItensVend, DataCompra, descricao, Ativo, public, usuario_id) 
+                           VALUES (:sku, :model, :nome, :cat, :vcompra, :vvenda, :qtd, 0, :datacompra, :desc, :ativo, :public, :uid)";
+                $stmt = $pdo->prepare($sqlIns);
+                $stmt->execute([
+                    ':sku' => $sku, ':model' => $model, ':nome' => $nome, ':cat' => $idCategoria,
+                    ':vcompra' => $valorCompra, ':vvenda' => $valorVenda, ':qtd' => $qtd,
+                    ':datacompra' => $dataCompra, ':desc' => $descricao, 
+                    ':ativo' => $ativo, ':public' => $public, ':uid' => $usuario_id
+                ]);
+                $targetAnuncioId = $pdo->lastInsertId(); // O ID do novo anúncio
 
-            // Atualizar Ordem das Imagens Existentes
-            if (isset($_POST['ordem_existente']) && is_array($_POST['ordem_existente'])) {
-                $sqlOrder = "UPDATE anuncio_imagem SET ordem = :ordem WHERE idImagem = :id AND anuncio_id = :aid";
-                $stmtOrder = $pdo->prepare($sqlOrder);
-                foreach ($_POST['ordem_existente'] as $idImg => $novaOrdem) {
-                    $stmtOrder->execute([
-                        ':ordem' => intval($novaOrdem),
-                        ':id' => intval($idImg),
-                        ':aid' => $idAnuncio
-                    ]);
+                // --- LÓGICA DE CÓPIA DE IMAGENS ---
+                // Copiar fisicamente as imagens e criar novos registros
+                $idsToExclude = $_POST['delete_img'] ?? []; // Imagens marcadas com X não serão copiadas
+                $orders = $_POST['ordem_existente'] ?? [];
+
+                // Preparar diretório de destino
+                $baseUploadPath = '../../uploads/catalogo/';
+                $targetDir = $baseUploadPath . $targetAnuncioId . '/';
+                if (!is_dir($targetDir)) {
+                    mkdir($targetDir, 0777, true);
                 }
-            }
 
-            // Excluir Imagens Selecionadas
-            if (isset($_POST['delete_img']) && is_array($_POST['delete_img'])) {
-                $idsParaDeletar = $_POST['delete_img'];
-                foreach ($idsParaDeletar as $idImg) {
-                    // Buscar caminho para deletar arquivo físico
-                    $stmtGetPath = $pdo->prepare("SELECT caminhoImagem FROM anuncio_imagem WHERE idImagem = :id AND anuncio_id = :aid");
-                    $stmtGetPath->execute([':id' => $idImg, ':aid' => $idAnuncio]);
-                    $imgData = $stmtGetPath->fetch();
+                $sqlCopyImg = "INSERT INTO anuncio_imagem (anuncio_id, caminhoImagem, ordem, dataCadastro) VALUES (:aid, :path, :ordem, NOW())";
+                $stmtCopyImg = $pdo->prepare($sqlCopyImg);
 
-                    if ($imgData) {
-                        // Caminho no banco: uploads/catalogo/ID/arquivo.jpg
-                        // Caminho físico relativo a este arquivo: ../../uploads/catalogo/ID/arquivo.jpg
-                        $physicalPath = '../../' . $imgData['caminhoImagem'];
-                        if (file_exists($physicalPath)) {
-                            unlink($physicalPath);
+                // Iterar sobre as imagens originais carregadas anteriormente
+                foreach ($imagensExistentes as $img) {
+                    // Pular se marcada para exclusão (não copiar)
+                    if (in_array($img['idImagem'], $idsToExclude)) continue;
+
+                    $sourcePath = '../../' . $img['caminhoImagem'];
+                    
+                    if (file_exists($sourcePath)) {
+                        // Gerar novo nome único para evitar conflitos
+                        $ext = pathinfo($img['caminhoImagem'], PATHINFO_EXTENSION);
+                        $newFileName = uniqid('img_copy_') . '.' . $ext;
+                        $destPath = $targetDir . $newFileName;
+                        $dbPath = 'uploads/catalogo/' . $targetAnuncioId . '/' . $newFileName;
+
+                        if (copy($sourcePath, $destPath)) {
+                            // Usar a ordem definida no formulário ou a original
+                            $order = isset($orders[$img['idImagem']]) ? $orders[$img['idImagem']] : $img['ordem'];
+                            
+                            $stmtCopyImg->execute([
+                                ':aid' => $targetAnuncioId,
+                                ':path' => $dbPath,
+                                ':ordem' => $order
+                            ]);
                         }
-                        
-                        // Deletar do banco
-                        $stmtDel = $pdo->prepare("DELETE FROM anuncio_imagem WHERE idImagem = :id");
-                        $stmtDel->execute([':id' => $idImg]);
+                    }
+                }
+            } else {
+                // LÓGICA DE EDIÇÃO (UPDATE)
+                $sqlUpd = "UPDATE anuncio SET 
+                    skuAnuncio = :sku, model = :model, NomeProduto = :nome, idCategoria = :cat, 
+                    ValorCompra = :vcompra, ValorVenda = :vvenda, QuantItens = :qtd, 
+                    QuantItensVend = :qtdVend, DataCompra = :datacompra, descricao = :desc, 
+                    Ativo = :ativo, public = :public, usuario_id = :uid 
+                    WHERE idAnuncio = :id";
+
+                $stmt = $pdo->prepare($sqlUpd);
+                $stmt->execute([
+                    ':sku' => $sku, ':model' => $model, ':nome' => $nome, ':cat' => $idCategoria,
+                    ':vcompra' => $valorCompra, ':vvenda' => $valorVenda, ':qtd' => $qtd,
+                    ':qtdVend' => $qtdVend, ':datacompra' => $dataCompra, ':desc' => $descricao, 
+                    ':ativo' => $ativo, ':public' => $public, ':uid' => $usuario_id, ':id' => $idAnuncio
+                ]);
+
+                // Atualizar Ordem das Imagens Existentes
+                if (isset($_POST['ordem_existente']) && is_array($_POST['ordem_existente'])) {
+                    $sqlOrder = "UPDATE anuncio_imagem SET ordem = :ordem WHERE idImagem = :id AND anuncio_id = :aid";
+                    $stmtOrder = $pdo->prepare($sqlOrder);
+                    foreach ($_POST['ordem_existente'] as $idImg => $novaOrdem) {
+                        $stmtOrder->execute([
+                            ':ordem' => intval($novaOrdem),
+                            ':id' => intval($idImg),
+                            ':aid' => $idAnuncio
+                        ]);
+                    }
+                }
+
+                // Excluir Imagens Selecionadas
+                if (isset($_POST['delete_img']) && is_array($_POST['delete_img'])) {
+                    $idsParaDeletar = $_POST['delete_img'];
+                    foreach ($idsParaDeletar as $idImg) {
+                        // Buscar caminho para deletar arquivo físico
+                        $stmtGetPath = $pdo->prepare("SELECT caminhoImagem FROM anuncio_imagem WHERE idImagem = :id AND anuncio_id = :aid");
+                        $stmtGetPath->execute([':id' => $idImg, ':aid' => $idAnuncio]);
+                        $imgData = $stmtGetPath->fetch();
+
+                        if ($imgData) {
+                            $physicalPath = '../../' . $imgData['caminhoImagem'];
+                            if (file_exists($physicalPath)) {
+                                unlink($physicalPath);
+                            }
+                            
+                            // Deletar do banco
+                            $stmtDel = $pdo->prepare("DELETE FROM anuncio_imagem WHERE idImagem = :id");
+                            $stmtDel->execute([':id' => $idImg]);
+                        }
                     }
                 }
             }
 
-            // Upload de Novas Imagens
+            // LÓGICA COMPARTILHADA: UPLOAD DE NOVAS IMAGENS
             if (isset($_FILES['imagens']) && !empty($_FILES['imagens']['name'][0])) {
-                // Recalcular quantas imagens existem agora
                 $stmtCount = $pdo->prepare("SELECT COUNT(*) FROM anuncio_imagem WHERE anuncio_id = :id");
-                $stmtCount->execute([':id' => $idAnuncio]);
+                $stmtCount->execute([':id' => $targetAnuncioId]);
                 $currentCount = $stmtCount->fetchColumn();
                 
-                // Buscar maior ordem para continuar a sequência corretamente
                 $stmtMax = $pdo->prepare("SELECT MAX(ordem) FROM anuncio_imagem WHERE anuncio_id = :id");
-                $stmtMax->execute([':id' => $idAnuncio]);
+                $stmtMax->execute([':id' => $targetAnuncioId]);
                 $maxOrder = $stmtMax->fetchColumn();
 
                 $files = $_FILES['imagens'];
                 $newCount = count($files['name']);
                 
                 if (($currentCount + $newCount) > 10) {
-                    throw new Exception("Limite de 10 imagens excedido. Você tem $currentCount e tentou enviar mais $newCount.");
+                    throw new Exception("Limite de 10 imagens excedido.");
                 }
 
                 $baseUploadPath = '../../uploads/catalogo/';
-                $targetDir = $baseUploadPath . $idAnuncio . '/';
+                $targetDir = $baseUploadPath . $targetAnuncioId . '/';
 
                 if (!is_dir($targetDir)) {
                     mkdir($targetDir, 0777, true);
@@ -175,7 +243,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $sqlImg = "INSERT INTO anuncio_imagem (anuncio_id, caminhoImagem, ordem, dataCadastro) VALUES (:aid, :path, :ordem, NOW())";
                 $stmtImgIns = $pdo->prepare($sqlImg);
-                $nextOrder = ($maxOrder !== false) ? $maxOrder + 1 : 1;
+                $nextOrder = ($maxOrder !== null) ? $maxOrder + 1 : 1;
 
                 for ($i = 0; $i < $newCount; $i++) {
                     if ($files['error'][$i] === UPLOAD_ERR_OK) {
@@ -184,11 +252,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $ext = pathinfo($fileName, PATHINFO_EXTENSION);
                         $newFileName = uniqid('img_') . '.' . $ext;
                         $destination = $targetDir . $newFileName;
-                        $dbPath = 'uploads/catalogo/' . $idAnuncio . '/' . $newFileName;
+                        $dbPath = 'uploads/catalogo/' . $targetAnuncioId . '/' . $newFileName;
 
                         if (move_uploaded_file($tmpName, $destination)) {
                             $stmtImgIns->execute([
-                                ':aid' => $idAnuncio,
+                                ':aid' => $targetAnuncioId,
                                 ':path' => $dbPath,
                                 ':ordem' => $nextOrder++
                             ]);
@@ -198,17 +266,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             $pdo->commit();
-            $sucesso = "Anúncio atualizado com sucesso!";
-            
-            // Recarregar dados
-            $stmtProd->execute([':id' => $idAnuncio]);
-            $produto = $stmtProd->fetch();
-            $stmtImg->execute([':id' => $idAnuncio]);
-            $imagensExistentes = $stmtImg->fetchAll();
+
+            if ($is_copy_mode_on_post) {
+                header('Location: edit.php?id=' . $targetAnuncioId . '&copied=1');
+                exit();
+            } else {
+                $sucesso = "Anúncio atualizado com sucesso!";
+                
+                // Recarregar dados após a edição
+                $stmtProd->execute([':id' => $idAnuncio]);
+                $produto = $stmtProd->fetch();
+                $stmtImg->execute([':id' => $idAnuncio]);
+                $imagensExistentes = $stmtImg->fetchAll();
+            }
 
         } catch (Exception $e) {
             $pdo->rollBack();
-            $erro = "Erro ao atualizar: " . $e->getMessage();
+            $erro = "Erro ao salvar: " . $e->getMessage();
         }
     }
 }
@@ -218,7 +292,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editar Anúncio #<?= $idAnuncio ?></title>
+    <title><?= $is_copy_mode ? 'Copiar' : 'Editar' ?> Anúncio #<?= $idAnuncio ?></title>
     <style>
         :root {
             --primary: #007bff;
@@ -281,7 +355,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <div class="container">
     <div class="card">
         <div class="header">
-            <h1>Editar Anúncio</h1>
+            <h1><?= $is_copy_mode ? 'Copiar Anúncio' : 'Editar Anúncio' ?></h1>
             <a href="index.php?view=list" class="btn-back">&larr; Voltar à Lista</a>
         </div>
 
@@ -293,7 +367,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="alert alert-success"><?= htmlspecialchars($sucesso) ?></div>
         <?php endif; ?>
 
-        <form action="" method="POST" enctype="multipart/form-data">
+        <form action="?id=<?= $idAnuncio ?><?= $is_copy_mode ? '&action=copy' : '' ?>" method="POST" enctype="multipart/form-data">
             <!-- Dados Básicos -->
             <div class="form-group">
                 <label for="skuAnuncio">SKU</label>
@@ -344,6 +418,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <input type="text" name="ValorVenda" class="money" value="<?= number_format($produto['ValorVenda'], 2, ',', '.') ?>">
             </div>
 
+            <div class="form-group">
+                <label for="DataCompra">Data da Compra</label>
+                <input type="date" name="DataCompra" id="DataCompra" value="<?= htmlspecialchars(substr($produto['DataCompra'] ?? '', 0, 10)) ?>">
+            </div>
+
             <!-- Descrição -->
             <div class="form-group full">
                 <label for="descricao">Descrição</label>
@@ -362,25 +441,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <!-- Gerenciamento de Imagens -->
             <div class="form-group full">
-                <label>Imagens Atuais (Marque o X para excluir ao salvar)</label>
-                <div class="existing-images">
-                    <?php if (empty($imagensExistentes)): ?>
-                        <p style="color: #777; font-style: italic;">Nenhuma imagem cadastrada.</p>
-                    <?php else: ?>
-                        <?php foreach ($imagensExistentes as $img): ?>
-                            <?php $idImg = $img['idImagem'] ?? $img['id']; // Ajuste para pegar o ID correto ?>
-                            <div class="img-wrapper" id="wrapper-<?= $idImg ?>">
-                                <img src="../../<?= htmlspecialchars($img['caminhoImagem']) ?>" alt="Img">
-                                <div class="img-actions">
-                                    <label style="font-size: 0.8rem; margin:0; color: #555;">Ordem (1=Capa)</label>
-                                    <input type="number" name="ordem_existente[<?= $idImg ?>]" value="<?= $img['ordem'] ?>" min="1" style="width: 60px; text-align: center; padding: 4px; border: 1px solid #ccc; border-radius: 4px;">
+                
+                    <label><?= $is_copy_mode ? 'Imagens do Anúncio Original (Marque X para NÃO copiar)' : 'Imagens Atuais (Marque o X para excluir ao salvar)' ?></label>
+                    <div class="existing-images">
+                        <?php if (empty($imagensExistentes)): ?>
+                            <p style="color: #777; font-style: italic;">Nenhuma imagem cadastrada.</p>
+                        <?php else: ?>
+                            <?php foreach ($imagensExistentes as $img): ?>
+                                <?php $idImg = $img['idImagem'] ?? $img['id']; // Ajuste para pegar o ID correto ?>
+                                <div class="img-wrapper" id="wrapper-<?= $idImg ?>">
+                                    <img src="../../<?= htmlspecialchars($img['caminhoImagem']) ?>" alt="Img">
+                                    <div class="img-actions">
+                                        <label style="font-size: 0.8rem; margin:0; color: #555;">Ordem (1=Capa)</label>
+                                        <input type="number" name="ordem_existente[<?= $idImg ?>]" value="<?= $img['ordem'] ?>" min="1" style="width: 60px; text-align: center; padding: 4px; border: 1px solid #ccc; border-radius: 4px;">
+                                    </div>
+                                    <button type="button" class="btn-delete-img" onclick="markForDeletion(<?= $idImg ?>)">X</button>
+                                    <input type="checkbox" name="delete_img[]" value="<?= $idImg ?>" id="del-<?= $idImg ?>" style="display:none;">
                                 </div>
-                                <button type="button" class="btn-delete-img" onclick="markForDeletion(<?= $idImg ?>)">X</button>
-                                <input type="checkbox" name="delete_img[]" value="<?= $idImg ?>" id="del-<?= $idImg ?>" style="display:none;">
-                            </div>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </div>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </div>
 
                 <label>Adicionar Novas Imagens</label>
                 <div class="image-upload-area" onclick="document.getElementById('imagens').click()">
@@ -390,7 +470,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="existing-images" id="preview" style="margin-top: 15px;"></div>
             </div>
 
-            <button type="submit" class="btn-submit">Salvar Alterações</button>
+            <button type="submit" class="btn-submit"><?= $is_copy_mode ? 'Criar Cópia' : 'Salvar Alterações' ?></button>
         </form>
     </div>
 </div>
