@@ -1,0 +1,34 @@
+@startuml Diagrama_Sequencia_Venda
+
+actor Usuario
+actor Cliente
+
+participant "Interface Web" as UI
+participant "Controller" as Controller
+participant "Service Venda" as Service
+participant "Banco de Dados" as DB
+
+Usuario -> UI : Inicia registro de venda
+UI -> Controller : enviar dados da venda
+Controller -> Service : validar dados
+
+Service -> DB : consultar anúncio
+DB --> Service : dados do anúncio
+
+Service -> DB : consultar cliente
+DB --> Service : dados do cliente
+
+Service -> DB : verificar estoque
+DB --> Service : quantidade disponível
+
+Service -> DB : inserir venda
+DB --> Service : venda registrada
+
+Service -> DB : atualizar estoque
+DB --> Service : estoque atualizado
+
+Service --> Controller : venda confirmada
+Controller --> UI : retorno de sucesso
+UI --> Usuario : venda concluída
+
+@enduml

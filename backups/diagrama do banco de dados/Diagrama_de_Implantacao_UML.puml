@@ -1,0 +1,31 @@
+@startuml Diagrama_Implantacao
+
+skinparam linetype ortho
+skinparam node {
+BorderColor Black
+BackgroundColor White
+}
+
+node "Cliente\nNavegador Web" {
+component "Frontend\nHTML / CSS / JS"
+}
+
+node "Servidor Web\nApache (XAMPP)" {
+component "Aplicação Web\nPHP"
+}
+
+node "Servidor de Banco de Dados\nMariaDB" {
+database "Banco de Dados\ncontrolestoque"
+}
+
+node "Sistema de Arquivos" {
+component "Uploads\nImagens de Anúncios"
+component "Backups\n.sql"
+}
+
+"Frontend\nHTML / CSS / JS" --> "Aplicação Web\nPHP" : HTTP/HTTPS
+"Aplicação Web\nPHP" --> "Banco de Dados\ncontrolestoque" : SQL
+"Aplicação Web\nPHP" --> "Uploads\nImagens de Anúncios" : leitura/escrita
+"Aplicação Web\nPHP" --> "Backups\n.sql" : geração de backup
+
+@enduml

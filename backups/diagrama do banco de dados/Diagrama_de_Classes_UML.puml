@@ -1,0 +1,98 @@
+@startuml Diagrama_Classes_UML
+
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+
+class Usuario {
++idUser : int
+Username : String
+Email : String
+Password : String
+arquivo : String
+DataRegistro : Date
+Permissao : int
+}
+
+class CategoriaProduto {
++idCategoria : int
+nomeCategoria : String
+statusCategoria : String
+dataCadastro : Timestamp
+}
+
+class Anuncio {
++idAnuncio : int
+skuAnuncio : String
+model : String
+NomeProduto : String
+ValorCompra : Decimal
+ValorVenda : Decimal
+DataCompra : Date
+QuantItens : Decimal
+QuantItensVend : Decimal
+Ativo : String
+public : int
+descricao : String
+}
+
+class AnuncioImagem {
++idImagem : int
+caminhoImagem : String
+ordem : int
+dataCadastro : Timestamp
+}
+
+class Cliente {
++idCliente : int
+NomeCliente : String
+CepCliente : String
+cpfCliente : String
+dataRegCliente : Timestamp
+statusCliente : int
+}
+
+class Produto {
++idProduto : int
+skuProduto : String
+nomeProduto : String
+modelo : String
+marca : String
+Conexao : String
+descricao : String
+especificacao : String
+statusProduto : String
+public : boolean
+dataCadastro : DateTime
+categoria : String
+DataCompra : Date
+QuantItens : int
+ValorCompra : Decimal
+}
+
+class Vendas {
++idVendas : int
+Itensquant : int
+Compra_id : Decimal
+valor : Decimal
+anuncio_data : Date
+DataVenda : Date
+CodRastreioV : String
+Vd_Tax : Decimal
+Diferenca_Venda_Compra : Decimal
+Diferenca_Quantidade : Decimal
+Venda_Total : Decimal
+}
+
+Usuario "1" -- "0..*" Anuncio : cria
+Usuario "1" -- "0..*" Produto : cadastra
+Usuario "1" -- "0..*" Cliente : registra
+Usuario "1" -- "0..*" Vendas : realiza
+
+CategoriaProduto "1" -- "0..*" Anuncio : classifica
+
+Anuncio "1" -- "0..*" AnuncioImagem : possui
+Anuncio "1" -- "0..*" Vendas : vendido_em
+
+Cliente "1" -- "0..*" Vendas : compra
+
+@enduml

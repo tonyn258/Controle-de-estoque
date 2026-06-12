@@ -1,0 +1,42 @@
+@startuml Diagrama_Calculos_Banco_Dados
+
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+
+class VENDAS {
+idVendas : INT
+Itensquant : INT
+Compra_id : DECIMAL
+Vd_Tax : DECIMAL
+Diferenca_Venda_Compra : DECIMAL
+Diferenca_Quantidade : DECIMAL
+Venda_Total : DECIMAL
+}
+
+class TRIGGER_Atualiza_Valores_Vendas {
+BEFORE INSERT
+BEFORE UPDATE
+}
+
+TRIGGER_Atualiza_Valores_Vendas --> VENDAS : executa_em
+
+note right of TRIGGER_Atualiza_Valores_Vendas
+Cálculos automáticos realizados no banco:
+
+1. Diferenca_Venda_Compra =
+   Vd_Tax - Compra_id
+
+2. Diferenca_Quantidade =
+   (Vd_Tax - Compra_id) * Itensquant
+
+3. Venda_Total =
+   Vd_Tax * Itensquant
+   end note
+
+note bottom of VENDAS
+Campos calculados automaticamente
+via TRIGGERS no MariaDB.
+Não devem ser calculados na aplicação.
+end note
+
+@enduml
